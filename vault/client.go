@@ -20,7 +20,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -355,7 +355,7 @@ func NewClientFromRawClient(rawClient *vaultapi.Client, opts ...ClientOption) (*
 	if o.token != "" {
 		rawClient.SetToken(o.token)
 	} else if rawClient.Token() == "" {
-		token, err := ioutil.ReadFile(o.tokenPath)
+		token, err := os.ReadFile(o.tokenPath)
 		if err == nil {
 			rawClient.SetToken(string(token))
 		} else {
@@ -385,14 +385,14 @@ func NewClientFromRawClient(rawClient *vaultapi.Client, opts ...ClientOption) (*
 						return nil, errors.Errorf("failed to get EC2 instance metadata: %s", resp.Status)
 					}
 
-					pkcs7Data, err := ioutil.ReadAll(resp.Body)
+					pkcs7Data, err := io.ReadAll(resp.Body)
 					if err != nil {
 						return nil, err
 					}
 
 					pkcs7 := strings.ReplaceAll(string(pkcs7Data), "\n", "")
 
-					jwt, err := ioutil.ReadFile(jwtFile)
+					jwt, err := os.ReadFile(jwtFile)
 					if err != nil {
 						return nil, err
 					}
@@ -430,7 +430,7 @@ func NewClientFromRawClient(rawClient *vaultapi.Client, opts ...ClientOption) (*
 						return nil, err
 					}
 
-					requestBody, err := ioutil.ReadAll(stsRequest.HTTPRequest.Body)
+					requestBody, err := io.ReadAll(stsRequest.HTTPRequest.Body)
 					if err != nil {
 						return nil, err
 					}
@@ -530,7 +530,7 @@ func NewClientFromRawClient(rawClient *vaultapi.Client, opts ...ClientOption) (*
 						}, nil
 					}
 
-					jwt, err := ioutil.ReadFile(jwtFile)
+					jwt, err := os.ReadFile(jwtFile)
 					if err != nil {
 						return nil, err
 					}
@@ -543,7 +543,7 @@ func NewClientFromRawClient(rawClient *vaultapi.Client, opts ...ClientOption) (*
 
 			default:
 				loginDataFunc = func() (map[string]interface{}, error) {
-					jwt, err := ioutil.ReadFile(jwtFile)
+					jwt, err := os.ReadFile(jwtFile)
 					if err != nil {
 						return nil, err
 					}

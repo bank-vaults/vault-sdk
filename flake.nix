@@ -17,6 +17,7 @@
             git
 
             go_1_20
+            golangci-lint
           ];
         };
       });
