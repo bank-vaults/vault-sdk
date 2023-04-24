@@ -1,6 +1,6 @@
-module github.com/banzaicloud/bank-vaults/pkg/sdk
+module github.com/bank-vaults/vault-sdk
 
-go 1.18
+go 1.19
 
 require (
 	cloud.google.com/go v0.78.0

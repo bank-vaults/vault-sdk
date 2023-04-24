@@ -21,12 +21,13 @@ import (
 	"emperror.dev/errors"
 	vaultapi "github.com/hashicorp/vault/api"
 
-	"github.com/banzaicloud/bank-vaults/pkg/sdk/vault"
+	"github.com/bank-vaults/vault-sdk/vault"
 )
 
 // DynamicSecretDataSource creates a SQL data source but instead of passing username:password
 // in the connection source, one just has to pass in a Vault role name:
-//     ds, err := DynamicSecretDataSource("mysql", "my-role@localhost:3306/dbname?parseTime=True")
+//
+//	ds, err := DynamicSecretDataSource("mysql", "my-role@localhost:3306/dbname?parseTime=True")
 //
 // MySQL (github.com/go-sql-driver/mysql) and PostgreSQL URI is supported.
 //

@@ -23,7 +23,7 @@ import (
 	vaultapi "github.com/hashicorp/vault/api"
 	"github.com/spf13/cast"
 
-	"github.com/banzaicloud/bank-vaults/pkg/sdk/vault"
+	"github.com/bank-vaults/vault-sdk/vault"
 )
 
 // Verify tokenstores satisfy the correct interface
