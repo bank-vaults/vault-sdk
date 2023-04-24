@@ -80,8 +80,6 @@ func TestGenerateTLS(t *testing.T) {
 		Certificates:             []tls.Certificate{serverCert},
 	}
 
-	tlsConfig.BuildNameToCertificate()
-
 	server := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "text/plain")
 		_, err := w.Write([]byte("This is an example TLS server.\n"))
@@ -105,7 +103,6 @@ func TestGenerateTLS(t *testing.T) {
 		Certificates: []tls.Certificate{clientCert},
 		RootCAs:      caCertPool,
 	}
-	clientTLSConfig.BuildNameToCertificate()
 	transport := &http.Transport{TLSClientConfig: clientTLSConfig}
 	client := &http.Client{Transport: transport}
 
@@ -186,8 +183,6 @@ func TestLoadAndRegenerateTLS(t *testing.T) {
 		Certificates:             []tls.Certificate{serverCert},
 	}
 
-	tlsConfig.BuildNameToCertificate()
-
 	server := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "text/plain")
 		_, err := w.Write([]byte("This is an example TLS server.\n"))
@@ -211,7 +206,6 @@ func TestLoadAndRegenerateTLS(t *testing.T) {
 		Certificates: []tls.Certificate{clientCert},
 		RootCAs:      caCertPool,
 	}
-	clientTLSConfig.BuildNameToCertificate()
 	transport := &http.Transport{TLSClientConfig: clientTLSConfig}
 	client := &http.Client{Transport: transport}
 
