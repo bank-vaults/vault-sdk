@@ -9,7 +9,7 @@ require (
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/hashicorp/vault/api v1.9.1
 	github.com/leosayous21/go-azure-msi v0.0.0-20210509193526-19353bedcfc8
-	github.com/spf13/cast v1.3.1
+	github.com/spf13/cast v1.5.0
 	golang.org/x/oauth2 v0.0.0-20210427180440-81ed05c6b58c
 	google.golang.org/api v0.40.0
 	google.golang.org/genproto v0.0.0-20210224155714-063164c882e6
@@ -32,7 +32,6 @@ require (
 	github.com/hashicorp/go-sockaddr v1.0.2 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
-	github.com/kr/text v0.2.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
