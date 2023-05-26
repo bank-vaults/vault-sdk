@@ -15,8 +15,8 @@
 package vault
 
 // Logger is a unified interface for various logging use cases and practices, including:
-// 		- leveled logging
-// 		- structured logging
+//   - leveled logging
+//   - structured logging
 //
 // See the original repository for more information: https://github.com/logur/logur
 type Logger interface {

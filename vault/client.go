@@ -145,6 +145,8 @@ func (co ExistingSecret) apply(o *clientOptions) {
 }
 
 // Vault Enterprise Namespace (not Kubernetes namespace)
+//
+//nolint:revive
 type VaultNamespace string
 
 func (co VaultNamespace) apply(o *clientOptions) {

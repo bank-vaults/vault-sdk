@@ -33,7 +33,7 @@ import (
 //
 // The underlying Vault client will make sure that the credential is renewed when it
 // is close to the time of expiry.
-func DynamicSecretDataSource(dialect string, source string) (dynamicSecretDataSource string, err error) {
+func DynamicSecretDataSource(_ string, source string) (dynamicSecretDataSource string, err error) {
 	postgresql := false
 	if strings.HasPrefix(source, "postgresql://") {
 		source = strings.TrimPrefix(source, "postgresql://")
