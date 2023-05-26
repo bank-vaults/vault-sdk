@@ -7,7 +7,7 @@ require (
 	emperror.dev/errors v0.8.1
 	github.com/aws/aws-sdk-go v1.44.269
 	github.com/fsnotify/fsnotify v1.6.0
-	github.com/hashicorp/vault/api v1.9.1
+	github.com/hashicorp/vault/api v1.9.2
 	github.com/leosayous21/go-azure-msi v0.0.0-20210509193526-19353bedcfc8
 	github.com/spf13/cast v1.5.1
 	golang.org/x/oauth2 v0.8.0
@@ -18,6 +18,7 @@ require (
 
 require (
 	github.com/cenkalti/backoff/v3 v3.0.0 // indirect
+	github.com/go-jose/go-jose/v3 v3.0.0 // indirect
 	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/go-cmp v0.5.9 // indirect
@@ -49,5 +50,4 @@ require (
 	google.golang.org/grpc v1.41.0 // indirect
 	google.golang.org/protobuf v1.28.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
-	gopkg.in/square/go-jose.v2 v2.5.1 // indirect
 )
