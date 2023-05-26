@@ -30,6 +30,7 @@ import (
 
 	"cloud.google.com/go/compute/metadata"
 	credentials "cloud.google.com/go/iam/credentials/apiv1"
+	"cloud.google.com/go/iam/credentials/apiv1/credentialspb"
 	"emperror.dev/errors"
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -39,7 +40,6 @@ import (
 	"github.com/leosayous21/go-azure-msi/msi"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/iam/v1"
-	credentialspb "google.golang.org/genproto/googleapis/iam/credentials/v1"
 )
 
 const (
