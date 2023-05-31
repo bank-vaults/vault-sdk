@@ -3,22 +3,43 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    flake-utils.url = "github:numtide/flake-utils";
+    flake-parts.url = "github:hercules-ci/flake-parts";
+    devenv.url = "github:cachix/devenv";
   };
 
-  outputs = { self, nixpkgs, flake-utils }:
-    flake-utils.lib.eachDefaultSystem (system:
-      let
-        pkgs = import nixpkgs { inherit system; };
-      in
-      {
-        devShells.default = pkgs.mkShell {
-          buildInputs = with pkgs; [
-            git
+  outputs = inputs@{ flake-parts, ... }:
+    flake-parts.lib.mkFlake { inherit inputs; } {
+      imports = [
+        inputs.devenv.flakeModule
+      ];
 
-            go_1_20
+      systems = [ "x86_64-linux" "x86_64-darwin" "aarch64-darwin" ];
+
+      perSystem = { config, self', inputs', pkgs, system, ... }: {
+        devenv.shells.default = {
+          languages = {
+            go.enable = true;
+          };
+
+          services = {
+            vault.enable = true;
+          };
+
+          packages = with pkgs; [
             golangci-lint
           ];
+
+          scripts = {
+            versions.exec = ''
+              go version
+              golangci-lint version
+            '';
+          };
+
+          enterShell = ''
+            versions
+          '';
         };
-      });
+      };
+    };
 }
