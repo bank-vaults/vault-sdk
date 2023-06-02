@@ -37,6 +37,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/fsnotify/fsnotify"
 	vaultapi "github.com/hashicorp/vault/api"
+	"github.com/hashicorp/vault/api/auth/kubernetes"
 	"github.com/leosayous21/go-azure-msi/msi"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/iam/v1"
@@ -606,11 +607,11 @@ func (client *Client) getVaultAPISecret(jwtFile string, o *clientOptions) (*vaul
 			return nil, err
 		}
 
-		loginData := map[string]interface{}{
-			"jwt":  string(jwt),
-			"role": o.role,
+		kubernetesAuth, err := kubernetes.NewKubernetesAuth(o.role, kubernetes.WithServiceAccountToken(string(jwt)), kubernetes.WithMountPath(o.authPath))
+		if err != nil {
+			return nil, err
 		}
-		return client.logical.Write(fmt.Sprintf("auth/%s/login", o.authPath), loginData)
+		return kubernetesAuth.Login(context.Background(), client.RawClient())
 	}
 }
 
