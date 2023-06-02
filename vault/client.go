@@ -37,8 +37,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/fsnotify/fsnotify"
 	vaultapi "github.com/hashicorp/vault/api"
+	"github.com/hashicorp/vault/api/auth/azure"
 	"github.com/hashicorp/vault/api/auth/kubernetes"
-	"github.com/leosayous21/go-azure-msi/msi"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/iam/v1"
 )
@@ -572,23 +572,11 @@ func (client *Client) getVaultAPISecret(jwtFile string, o *clientOptions) (*vaul
 		return client.logical.Write(fmt.Sprintf("auth/%s/login", o.authPath), loginData)
 
 	case AzureMSIAuthMethod:
-		metadata, err := msi.GetInstanceMetadata()
+		azureAuth, err := azure.NewAzureAuth(o.role, azure.WithMountPath(o.authPath))
 		if err != nil {
 			return nil, err
 		}
-		token, err := msi.GetMsiToken()
-		if err != nil {
-			return nil, err
-		}
-		loginData := map[string]interface{}{
-			"role":                o.role,
-			"jwt":                 token.AccessToken,
-			"subscription_id":     metadata.SubscriptionId,
-			"resource_group_name": metadata.ResourceGroupName,
-			"vm_name":             metadata.VMName,
-			"vmss_name":           metadata.VMssName,
-		}
-		return client.logical.Write(fmt.Sprintf("auth/%s/login", o.authPath), loginData)
+		return azureAuth.Login(context.Background(), client.RawClient())
 
 	case NamespacedSecretAuthMethod:
 		if len(o.existingSecret) > 0 {
