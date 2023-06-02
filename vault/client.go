@@ -590,25 +590,16 @@ func (client *Client) getVaultAPISecret(jwtFile string, o *clientOptions) (*vaul
 		return client.logical.Write(fmt.Sprintf("auth/%s/login", o.authPath), loginData)
 
 	case NamespacedSecretAuthMethod:
-		var loginData map[string]interface{}
 		if len(o.existingSecret) > 0 {
-			loginData = map[string]interface{}{
+			loginData := map[string]interface{}{
 				"jwt":  o.existingSecret,
 				"role": o.role,
 			}
-		} else {
-			jwt, err := os.ReadFile(jwtFile)
-			if err != nil {
-				return nil, err
-			}
-
-			loginData = map[string]interface{}{
-				"jwt":  string(jwt),
-				"role": o.role,
-			}
+			return client.logical.Write(fmt.Sprintf("auth/%s/login", o.authPath), loginData)
 		}
-		return client.logical.Write(fmt.Sprintf("auth/%s/login", o.authPath), loginData)
+		fallthrough
 
+	// 'jwt' or 'kubernetes', ends up doing JWT as it also works for Kubernetes
 	default:
 		jwt, err := os.ReadFile(jwtFile)
 		if err != nil {
