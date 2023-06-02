@@ -592,11 +592,11 @@ func (client *Client) getVaultAPISecret(jwtFile string, o *clientOptions) (*vaul
 
 	case NamespacedSecretAuthMethod:
 		if len(o.existingSecret) > 0 {
-			loginData := map[string]interface{}{
-				"jwt":  o.existingSecret,
-				"role": o.role,
+			kubernetesAuth, err := kubernetes.NewKubernetesAuth(o.role, kubernetes.WithServiceAccountToken(o.existingSecret), kubernetes.WithMountPath(o.authPath))
+			if err != nil {
+				return nil, err
 			}
-			return client.logical.Write(fmt.Sprintf("auth/%s/login", o.authPath), loginData)
+			return kubernetesAuth.Login(context.Background(), client.RawClient())
 		}
 		fallthrough
 
