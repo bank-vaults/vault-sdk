@@ -29,8 +29,6 @@ import (
 	"time"
 
 	"cloud.google.com/go/compute/metadata"
-	credentials "cloud.google.com/go/iam/credentials/apiv1"
-	"cloud.google.com/go/iam/credentials/apiv1/credentialspb"
 	"emperror.dev/errors"
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -38,6 +36,7 @@ import (
 	"github.com/fsnotify/fsnotify"
 	vaultapi "github.com/hashicorp/vault/api"
 	"github.com/hashicorp/vault/api/auth/azure"
+	"github.com/hashicorp/vault/api/auth/gcp"
 	"github.com/hashicorp/vault/api/auth/kubernetes"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/iam/v1"
@@ -534,42 +533,16 @@ func (client *Client) getVaultAPISecret(jwtFile string, o *clientOptions) (*vaul
 		return client.logical.Write(fmt.Sprintf("auth/%s/login", o.authPath), loginData)
 
 	case GCPIAMAuthMethod:
-		c, err := credentials.NewIamCredentialsClient(context.TODO())
+		serviceAccountEmail, err := metadata.NewClient(nil).Email("default")
 		if err != nil {
 			return nil, err
 		}
 
-		metadataClient := metadata.NewClient(nil)
-		serviceAccountEmail, err := metadataClient.Email("default")
+		gcpAuth, err := gcp.NewGCPAuth(o.role, gcp.WithIAMAuth(serviceAccountEmail), gcp.WithMountPath(o.authPath))
 		if err != nil {
 			return nil, err
 		}
-
-		jwtPayload := map[string]interface{}{
-			"aud": fmt.Sprintf("vault/%s", o.role),
-			"sub": serviceAccountEmail,
-			"exp": time.Now().Add(time.Minute * 10).Unix(),
-		}
-
-		payloadBytes, err := json.Marshal(jwtPayload)
-		if err != nil {
-			return nil, err
-		}
-
-		req := &credentialspb.SignJwtRequest{
-			Name:    fmt.Sprintf("projects/-/serviceAccounts/%s", serviceAccountEmail),
-			Payload: string(payloadBytes),
-		}
-		resp, err := c.SignJwt(context.TODO(), req)
-		if err != nil {
-			return nil, err
-		}
-
-		loginData := map[string]interface{}{
-			"jwt":  resp.SignedJwt,
-			"role": o.role,
-		}
-		return client.logical.Write(fmt.Sprintf("auth/%s/login", o.authPath), loginData)
+		return gcpAuth.Login(context.Background(), client.RawClient())
 
 	case AzureMSIAuthMethod:
 		azureAuth, err := azure.NewAzureAuth(o.role, azure.WithMountPath(o.authPath))
