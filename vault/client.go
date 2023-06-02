@@ -38,8 +38,6 @@ import (
 	"github.com/hashicorp/vault/api/auth/azure"
 	"github.com/hashicorp/vault/api/auth/gcp"
 	"github.com/hashicorp/vault/api/auth/kubernetes"
-	"golang.org/x/oauth2/google"
-	"google.golang.org/api/iam/v1"
 )
 
 const (
@@ -516,21 +514,11 @@ func (client *Client) getVaultAPISecret(jwtFile string, o *clientOptions) (*vaul
 		return client.logical.Write(fmt.Sprintf("auth/%s/login", o.authPath), loginData)
 
 	case GCPGCEAuthMethod:
-		tokenSource, err := google.DefaultTokenSource(context.TODO(), iam.CloudPlatformScope)
+		gcpAuth, err := gcp.NewGCPAuth(o.role, gcp.WithGCEAuth(), gcp.WithMountPath(o.authPath))
 		if err != nil {
 			return nil, err
 		}
-
-		jwt, err := tokenSource.Token()
-		if err != nil {
-			return nil, err
-		}
-
-		loginData := map[string]interface{}{
-			"jwt":  jwt,
-			"role": o.role,
-		}
-		return client.logical.Write(fmt.Sprintf("auth/%s/login", o.authPath), loginData)
+		return gcpAuth.Login(context.Background(), client.RawClient())
 
 	case GCPIAMAuthMethod:
 		serviceAccountEmail, err := metadata.NewClient(nil).Email("default")
