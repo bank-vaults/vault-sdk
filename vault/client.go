@@ -17,33 +17,24 @@ package vault
 import (
 	"context"
 	"crypto/sha256"
-	"encoding/base64"
-	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"path/filepath"
-	"strings"
 	"sync"
 	"time"
 
 	"cloud.google.com/go/compute/metadata"
-	credentials "cloud.google.com/go/iam/credentials/apiv1"
-	"cloud.google.com/go/iam/credentials/apiv1/credentialspb"
 	"emperror.dev/errors"
-	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/fsnotify/fsnotify"
 	vaultapi "github.com/hashicorp/vault/api"
-	"github.com/leosayous21/go-azure-msi/msi"
-	"golang.org/x/oauth2/google"
-	"google.golang.org/api/iam/v1"
+	"github.com/hashicorp/vault/api/auth/aws"
+	"github.com/hashicorp/vault/api/auth/azure"
+	"github.com/hashicorp/vault/api/auth/gcp"
+	"github.com/hashicorp/vault/api/auth/kubernetes"
 )
 
 const (
-	awsEC2PKCS7Url = "http://169.254.169.254/latest/dynamic/instance-identity/pkcs7"
 	defaultJWTFile = "/var/run/secrets/kubernetes.io/serviceaccount/token"
 )
 
@@ -372,191 +363,6 @@ func NewClientFromRawClient(rawClient *vaultapi.Client, opts ...ClientOption) (*
 				jwtFile = file
 			}
 
-			var loginDataFunc func() (map[string]interface{}, error)
-
-			switch o.authMethod { //nolint:exhaustive
-			case AWSEC2AuthMethod:
-				loginDataFunc = func() (map[string]interface{}, error) {
-					resp, err := http.Get(awsEC2PKCS7Url) //nolint:noctx
-					if err != nil {
-						return nil, err
-					}
-					defer resp.Body.Close()
-
-					if resp.StatusCode != http.StatusOK {
-						return nil, errors.Errorf("failed to get EC2 instance metadata: %s", resp.Status)
-					}
-
-					pkcs7Data, err := io.ReadAll(resp.Body)
-					if err != nil {
-						return nil, err
-					}
-
-					pkcs7 := strings.ReplaceAll(string(pkcs7Data), "\n", "")
-
-					jwt, err := os.ReadFile(jwtFile)
-					if err != nil {
-						return nil, err
-					}
-
-					nonce := fmt.Sprintf("%x", sha256.Sum256(jwt))
-
-					return map[string]interface{}{
-						"pkcs7": pkcs7,
-						"nonce": nonce,
-						"role":  o.role,
-					}, nil
-				}
-
-			case AWSIAMAuthMethod:
-				loginDataFunc = func() (map[string]interface{}, error) {
-					stsSession, err := session.NewSessionWithOptions(session.Options{
-						CredentialsProviderOptions: &session.CredentialsProviderOptions{
-							WebIdentityRoleProviderOptions: func(*stscreds.WebIdentityRoleProvider) {},
-						},
-					})
-					if err != nil {
-						return nil, err
-					}
-
-					var params *sts.GetCallerIdentityInput
-					svc := sts.New(stsSession)
-					stsRequest, _ := svc.GetCallerIdentityRequest(params)
-					singErr := stsRequest.Sign()
-					if singErr != nil {
-						return nil, singErr
-					}
-
-					headersJSON, err := json.Marshal(stsRequest.HTTPRequest.Header)
-					if err != nil {
-						return nil, err
-					}
-
-					requestBody, err := io.ReadAll(stsRequest.HTTPRequest.Body)
-					if err != nil {
-						return nil, err
-					}
-
-					return map[string]interface{}{
-						"role":                    o.role,
-						"iam_http_request_method": stsRequest.HTTPRequest.Method,
-						"iam_request_url":         base64.StdEncoding.EncodeToString([]byte(stsRequest.HTTPRequest.URL.String())),
-						"iam_request_headers":     base64.StdEncoding.EncodeToString(headersJSON),
-						"iam_request_body":        base64.StdEncoding.EncodeToString(requestBody),
-					}, nil
-				}
-
-			case GCPGCEAuthMethod:
-				loginDataFunc = func() (map[string]interface{}, error) {
-					tokenSource, err := google.DefaultTokenSource(context.TODO(), iam.CloudPlatformScope)
-					if err != nil {
-						return nil, err
-					}
-
-					jwt, err := tokenSource.Token()
-					if err != nil {
-						return nil, err
-					}
-
-					return map[string]interface{}{
-						"jwt":  jwt,
-						"role": o.role,
-					}, nil
-				}
-
-			case GCPIAMAuthMethod:
-				loginDataFunc = func() (map[string]interface{}, error) {
-					c, err := credentials.NewIamCredentialsClient(context.TODO())
-					if err != nil {
-						return nil, err
-					}
-
-					metadataClient := metadata.NewClient(nil)
-					serviceAccountEmail, err := metadataClient.Email("default")
-					if err != nil {
-						return nil, err
-					}
-
-					jwtPayload := map[string]interface{}{
-						"aud": fmt.Sprintf("vault/%s", o.role),
-						"sub": serviceAccountEmail,
-						"exp": time.Now().Add(time.Minute * 10).Unix(),
-					}
-
-					payloadBytes, err := json.Marshal(jwtPayload)
-					if err != nil {
-						return nil, err
-					}
-
-					req := &credentialspb.SignJwtRequest{
-						Name:    fmt.Sprintf("projects/-/serviceAccounts/%s", serviceAccountEmail),
-						Payload: string(payloadBytes),
-					}
-					resp, err := c.SignJwt(context.TODO(), req)
-					if err != nil {
-						return nil, err
-					}
-
-					return map[string]interface{}{
-						"jwt":  resp.SignedJwt,
-						"role": o.role,
-					}, nil
-				}
-
-			case AzureMSIAuthMethod:
-				loginDataFunc = func() (map[string]interface{}, error) {
-					metadata, err := msi.GetInstanceMetadata()
-					if err != nil {
-						return nil, err
-					}
-					token, err := msi.GetMsiToken()
-					if err != nil {
-						return nil, err
-					}
-					return map[string]interface{}{
-						"role":                o.role,
-						"jwt":                 token.AccessToken,
-						"subscription_id":     metadata.SubscriptionId,
-						"resource_group_name": metadata.ResourceGroupName,
-						"vm_name":             metadata.VMName,
-						"vmss_name":           metadata.VMssName,
-					}, nil
-				}
-
-			case NamespacedSecretAuthMethod:
-				loginDataFunc = func() (map[string]interface{}, error) {
-					if len(o.existingSecret) > 0 {
-						return map[string]interface{}{
-							"jwt":  o.existingSecret,
-							"role": o.role,
-						}, nil
-					}
-
-					jwt, err := os.ReadFile(jwtFile)
-					if err != nil {
-						return nil, err
-					}
-
-					return map[string]interface{}{
-						"jwt":  string(jwt),
-						"role": o.role,
-					}, nil
-				}
-
-			default:
-				loginDataFunc = func() (map[string]interface{}, error) {
-					jwt, err := os.ReadFile(jwtFile)
-					if err != nil {
-						return nil, err
-					}
-
-					return map[string]interface{}{
-						"jwt":  string(jwt),
-						"role": o.role,
-					}, nil
-				}
-			}
-
 			initialTokenArrived := make(chan string, 1)
 			initialTokenSent := false
 
@@ -569,17 +375,7 @@ func NewClientFromRawClient(rawClient *vaultapi.Client, opts ...ClientOption) (*
 					}
 					client.mu.Unlock()
 
-					// Projected SA JWTs do expire, so we need to move the reading logic into the loop
-					loginData, err := loginDataFunc()
-					if err != nil {
-						client.logger.Error("failed to read login data", map[string]interface{}{
-							"err":  err,
-							"type": o.authMethod,
-						})
-						continue
-					}
-
-					secret, err := logical.Write(fmt.Sprintf("auth/%s/login", o.authPath), loginData)
+					secret, err := client.getVaultAPISecret(jwtFile, o)
 					if err != nil {
 						client.logger.Error("failed to request new Vault token", map[string]interface{}{"err": err})
 						time.Sleep(1 * time.Second)
@@ -637,6 +433,81 @@ func NewClientFromRawClient(rawClient *vaultapi.Client, opts ...ClientOption) (*
 	}
 
 	return client, nil
+}
+
+func (client *Client) getVaultAPISecret(jwtFile string, o *clientOptions) (*vaultapi.Secret, error) {
+	switch o.authMethod { //nolint:exhaustive
+	case AWSEC2AuthMethod:
+		jwt, err := os.ReadFile(jwtFile)
+		if err != nil {
+			return nil, err
+		}
+		nonce := fmt.Sprintf("%x", sha256.Sum256(jwt))
+
+		awsAuth, err := aws.NewAWSAuth(aws.WithRole(o.role), aws.WithMountPath(o.authPath), aws.WithEC2Auth(), aws.WithPKCS7Signature(), aws.WithNonce(nonce))
+		if err != nil {
+			return nil, err
+		}
+
+		return awsAuth.Login(context.Background(), client.RawClient())
+
+	case AWSIAMAuthMethod:
+		awsAuth, err := aws.NewAWSAuth(aws.WithRole(o.role), aws.WithMountPath(o.authPath), aws.WithIAMAuth())
+		if err != nil {
+			return nil, err
+		}
+
+		return awsAuth.Login(context.Background(), client.RawClient())
+
+	case GCPGCEAuthMethod:
+		gcpAuth, err := gcp.NewGCPAuth(o.role, gcp.WithGCEAuth(), gcp.WithMountPath(o.authPath))
+		if err != nil {
+			return nil, err
+		}
+		return gcpAuth.Login(context.Background(), client.RawClient())
+
+	case GCPIAMAuthMethod:
+		serviceAccountEmail, err := metadata.NewClient(nil).Email("default")
+		if err != nil {
+			return nil, err
+		}
+
+		gcpAuth, err := gcp.NewGCPAuth(o.role, gcp.WithIAMAuth(serviceAccountEmail), gcp.WithMountPath(o.authPath))
+		if err != nil {
+			return nil, err
+		}
+		return gcpAuth.Login(context.Background(), client.RawClient())
+
+	case AzureMSIAuthMethod:
+		azureAuth, err := azure.NewAzureAuth(o.role, azure.WithMountPath(o.authPath))
+		if err != nil {
+			return nil, err
+		}
+		return azureAuth.Login(context.Background(), client.RawClient())
+
+	case NamespacedSecretAuthMethod:
+		if len(o.existingSecret) > 0 {
+			kubernetesAuth, err := kubernetes.NewKubernetesAuth(o.role, kubernetes.WithServiceAccountToken(o.existingSecret), kubernetes.WithMountPath(o.authPath))
+			if err != nil {
+				return nil, err
+			}
+			return kubernetesAuth.Login(context.Background(), client.RawClient())
+		}
+		fallthrough
+
+	// 'jwt' or 'kubernetes', ends up doing JWT as it also works for Kubernetes
+	default:
+		jwt, err := os.ReadFile(jwtFile)
+		if err != nil {
+			return nil, err
+		}
+
+		kubernetesAuth, err := kubernetes.NewKubernetesAuth(o.role, kubernetes.WithServiceAccountToken(string(jwt)), kubernetes.WithMountPath(o.authPath))
+		if err != nil {
+			return nil, err
+		}
+		return kubernetesAuth.Login(context.Background(), client.RawClient())
+	}
 }
 
 func (client *Client) runRenewChecker(tokenWatcher *vaultapi.Renewer) {
