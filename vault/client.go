@@ -17,31 +17,24 @@ package vault
 import (
 	"context"
 	"crypto/sha256"
-	"encoding/base64"
-	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"path/filepath"
-	"strings"
 	"sync"
 	"time"
 
 	"cloud.google.com/go/compute/metadata"
 	"emperror.dev/errors"
-	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/fsnotify/fsnotify"
 	vaultapi "github.com/hashicorp/vault/api"
+	"github.com/hashicorp/vault/api/auth/aws"
 	"github.com/hashicorp/vault/api/auth/azure"
 	"github.com/hashicorp/vault/api/auth/gcp"
 	"github.com/hashicorp/vault/api/auth/kubernetes"
 )
 
 const (
-	awsEC2PKCS7Url = "http://169.254.169.254/latest/dynamic/instance-identity/pkcs7"
 	defaultJWTFile = "/var/run/secrets/kubernetes.io/serviceaccount/token"
 )
 
@@ -445,73 +438,26 @@ func NewClientFromRawClient(rawClient *vaultapi.Client, opts ...ClientOption) (*
 func (client *Client) getVaultAPISecret(jwtFile string, o *clientOptions) (*vaultapi.Secret, error) {
 	switch o.authMethod { //nolint:exhaustive
 	case AWSEC2AuthMethod:
-		resp, err := http.Get(awsEC2PKCS7Url) //nolint:noctx
-		if err != nil {
-			return nil, err
-		}
-		defer resp.Body.Close()
-
-		if resp.StatusCode != http.StatusOK {
-			return nil, errors.Errorf("failed to get EC2 instance metadata: %s", resp.Status)
-		}
-
-		pkcs7Data, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return nil, err
-		}
-
-		pkcs7 := strings.ReplaceAll(string(pkcs7Data), "\n", "")
-
 		jwt, err := os.ReadFile(jwtFile)
 		if err != nil {
 			return nil, err
 		}
-
 		nonce := fmt.Sprintf("%x", sha256.Sum256(jwt))
 
-		loginData := map[string]interface{}{
-			"pkcs7": pkcs7,
-			"nonce": nonce,
-			"role":  o.role,
+		awsAuth, err := aws.NewAWSAuth(aws.WithRole(o.role), aws.WithMountPath(o.authPath), aws.WithEC2Auth(), aws.WithPKCS7Signature(), aws.WithNonce(nonce))
+		if err != nil {
+			return nil, err
 		}
-		return client.logical.Write(fmt.Sprintf("auth/%s/login", o.authPath), loginData)
+
+		return awsAuth.Login(context.Background(), client.RawClient())
 
 	case AWSIAMAuthMethod:
-		stsSession, err := session.NewSessionWithOptions(session.Options{
-			CredentialsProviderOptions: &session.CredentialsProviderOptions{
-				WebIdentityRoleProviderOptions: func(*stscreds.WebIdentityRoleProvider) {},
-			},
-		})
+		awsAuth, err := aws.NewAWSAuth(aws.WithRole(o.role), aws.WithMountPath(o.authPath), aws.WithIAMAuth())
 		if err != nil {
 			return nil, err
 		}
 
-		var params *sts.GetCallerIdentityInput
-		svc := sts.New(stsSession)
-		stsRequest, _ := svc.GetCallerIdentityRequest(params)
-		singErr := stsRequest.Sign()
-		if singErr != nil {
-			return nil, singErr
-		}
-
-		headersJSON, err := json.Marshal(stsRequest.HTTPRequest.Header)
-		if err != nil {
-			return nil, err
-		}
-
-		requestBody, err := io.ReadAll(stsRequest.HTTPRequest.Body)
-		if err != nil {
-			return nil, err
-		}
-
-		loginData := map[string]interface{}{
-			"role":                    o.role,
-			"iam_http_request_method": stsRequest.HTTPRequest.Method,
-			"iam_request_url":         base64.StdEncoding.EncodeToString([]byte(stsRequest.HTTPRequest.URL.String())),
-			"iam_request_headers":     base64.StdEncoding.EncodeToString(headersJSON),
-			"iam_request_body":        base64.StdEncoding.EncodeToString(requestBody),
-		}
-		return client.logical.Write(fmt.Sprintf("auth/%s/login", o.authPath), loginData)
+		return awsAuth.Login(context.Background(), client.RawClient())
 
 	case GCPGCEAuthMethod:
 		gcpAuth, err := gcp.NewGCPAuth(o.role, gcp.WithGCEAuth(), gcp.WithMountPath(o.authPath))
