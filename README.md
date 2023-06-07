@@ -14,6 +14,30 @@
 go get github.com/bank-vaults/vault-sdk
 ```
 
+## Development
+
+**For an optimal developer experience, it is recommended to install [Nix](https://nixos.org/download.html) and [direnv](https://direnv.net/docs/installation.html).**
+
+_Alternatively, install [Go](https://go.dev/dl/) on your computer then run `make deps` to install the rest of the dependencies._
+
+Run the test suite:
+
+```shell
+make test
+```
+
+Run the linter:
+
+```shell
+make lint
+```
+
+Some linter violations can automatically be fixed:
+
+```shell
+make fmt
+```
+
 ## License
 
 The project is licensed under the [Apache 2.0 License](LICENSE).
