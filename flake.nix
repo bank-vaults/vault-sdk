@@ -15,33 +15,37 @@
 
       systems = [ "x86_64-linux" "x86_64-darwin" "aarch64-darwin" ];
 
-      perSystem = { config, self', inputs', pkgs, system, ... }: {
-        devenv.shells.default = {
-          languages = {
-            go.enable = true;
-          };
+      perSystem = { config, self', inputs', pkgs, system, ... }: rec {
+        devenv.shells = {
+          default = {
+            languages = {
+              go.enable = true;
+            };
 
-          services = {
-            vault.enable = true;
-          };
+            services = {
+              vault.enable = true;
+            };
 
-          packages = with pkgs; [
-            golangci-lint
-          ];
+            packages = with pkgs; [
+              golangci-lint
+            ];
 
-          scripts = {
-            versions.exec = ''
-              go version
-              golangci-lint version
+            scripts = {
+              versions.exec = ''
+                go version
+                golangci-lint version
+              '';
+            };
+
+            enterShell = ''
+              versions
             '';
+
+            # https://github.com/cachix/devenv/issues/528#issuecomment-1556108767
+            containers = pkgs.lib.mkForce { };
           };
 
-          enterShell = ''
-            versions
-          '';
-
-          # https://github.com/cachix/devenv/issues/528#issuecomment-1556108767
-          containers = pkgs.lib.mkForce { };
+          ci = devenv.shells.default;
         };
       };
     };
