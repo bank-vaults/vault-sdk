@@ -3,7 +3,7 @@
 export PATH := $(abspath bin/):${PATH}
 
 # Dependency versions
-GOLANGCI_VERSION ?= 1.53.1
+GOLANGCI_VERSION = 1.53.1
 
 .PHONY: check
 check: test lint ## Run checks (tests and linters)
