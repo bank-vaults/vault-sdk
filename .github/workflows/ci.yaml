@@ -45,6 +45,9 @@ jobs:
           extra_nix_config: |
             access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
 
+      - name: Prepare Nix shell
+        run: nix develop --impure .#ci
+
       - name: Lint
         run: nix develop --impure .#ci -c make lint
 
