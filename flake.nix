@@ -27,6 +27,8 @@
             };
 
             packages = with pkgs; [
+              gnumake
+
               golangci-lint
             ];
 
