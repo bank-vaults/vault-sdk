@@ -14,6 +14,10 @@
 go get github.com/bank-vaults/vault-sdk
 ```
 
+## Documentation
+
+Check out the [documentation](https://bank-vaults.dev/docs/go-library/) on the website or on [pkg.go.dev](https://pkg.go.dev/mod/github.com/bank-vaults/vault-sdk).
+
 ## Development
 
 **For an optimal developer experience, it is recommended to install [Nix](https://nixos.org/download.html) and [direnv](https://direnv.net/docs/installation.html).**
