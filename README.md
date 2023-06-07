@@ -6,7 +6,7 @@
 ![Go Version](https://img.shields.io/badge/go%20version-%3E=1.19-61CFDD.svg?style=flat-square)
 [![PkgGoDev](https://pkg.go.dev/badge/mod/github.com/bank-vaults/vault-sdk)](https://pkg.go.dev/mod/github.com/bank-vaults/vault-sdk)
 
-**Go libraries for interacting with Hashicorp Vault.**
+**Go libraries for interacting with [Hashicorp Vault](https://www.vaultproject.io/).**
 
 ## Install
 
