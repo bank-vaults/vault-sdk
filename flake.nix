@@ -26,10 +26,17 @@
               vault.enable = true;
             };
 
+            pre-commit.hooks = {
+              nixpkgs-fmt.enable = true;
+              yamllint.enable = true;
+            };
+
             packages = with pkgs; [
               gnumake
 
               golangci-lint
+
+              yamllint
             ];
 
             scripts = {

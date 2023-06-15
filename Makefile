@@ -13,8 +13,16 @@ test: ## Run tests
 	go test -race -v ./...
 
 .PHONY: lint
+lint: lint-go lint-yaml
 lint: ## Run linter
-	golangci-lint run ${LINT_ARGS}
+
+.PHONY: lint-go
+lint-go:
+	golangci-lint run $(if ${CI},--out-format github-actions,)
+
+.PHONY: lint-yaml
+lint-yaml:
+	yamllint $(if ${CI},-f github,) --no-warnings .
 
 .PHONY: fmt
 fmt: ## Format code
