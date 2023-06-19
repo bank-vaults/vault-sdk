@@ -3,6 +3,9 @@
     "extends": [
         "schedule:earlyMondays"
     ],
+    "enabledManagers": [
+        "nix"
+    ],
     "nix": {
         "enabled": true
     },
