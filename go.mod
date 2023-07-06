@@ -10,13 +10,13 @@ require (
 	github.com/hashicorp/vault/api v1.9.2
 	github.com/leosayous21/go-azure-msi v0.0.0-20210509193526-19353bedcfc8
 	github.com/spf13/cast v1.5.1
-	golang.org/x/oauth2 v0.9.0
+	golang.org/x/oauth2 v0.10.0
 	google.golang.org/api v0.130.0
 	gopkg.in/mcuadros/go-syslog.v2 v2.3.0
 )
 
 require (
-	cloud.google.com/go/compute v1.19.3 // indirect
+	cloud.google.com/go/compute v1.20.1 // indirect
 	cloud.google.com/go/iam v1.1.1
 	github.com/cenkalti/backoff/v3 v3.0.0 // indirect
 	github.com/go-jose/go-jose/v3 v3.0.0 // indirect
