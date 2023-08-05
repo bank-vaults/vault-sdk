@@ -15,6 +15,9 @@ body:
       description: Please ensure you've completed all of the following.
       options:
         - label: I have searched the [issue tracker](https://www.github.com/bank-vaults/vault-sdk/issues) for an issue that matches the one I want to file, without success.
+```suggestion
+          required: true
+        - label: I agree to follow the [Code of Conduct](https://bank-vaults.dev/docs/code-of-conduct/).
           required: true
   - type: textarea
     attributes:
