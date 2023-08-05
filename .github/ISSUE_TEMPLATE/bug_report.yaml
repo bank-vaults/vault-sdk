@@ -19,6 +19,8 @@ body:
           required: true
         - label: I am not looking for support or already pursued the available [support channels](https://github.com/bank-vaults/vault-sdk/issues/new/choose) without success.
           required: true
+        - label: I agree to follow the [Code of Conduct](https://bank-vaults.dev/docs/code-of-conduct/).
+          required: true
   - type: input
     attributes:
       label: Vault SDK Version
