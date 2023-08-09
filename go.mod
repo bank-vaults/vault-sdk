@@ -19,7 +19,7 @@ require golang.org/x/sync v0.3.0 // indirect
 
 require (
 	cloud.google.com/go/compute v1.20.1 // indirect
-	cloud.google.com/go/iam v1.1.1
+	cloud.google.com/go/iam v1.1.2
 	github.com/cenkalti/backoff/v3 v3.0.0 // indirect
 	github.com/go-jose/go-jose/v3 v3.0.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
