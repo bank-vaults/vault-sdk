@@ -11,7 +11,7 @@ require (
 	github.com/leosayous21/go-azure-msi v0.0.0-20210509193526-19353bedcfc8
 	github.com/spf13/cast v1.5.1
 	golang.org/x/oauth2 v0.11.0
-	google.golang.org/api v0.137.0
+	google.golang.org/api v0.138.0
 	gopkg.in/mcuadros/go-syslog.v2 v2.3.0
 )
 
