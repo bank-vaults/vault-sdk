@@ -1,12 +1,12 @@
 blank_issues_enabled: true
 contact_links:
-  - name: 📖 Documentation enhancement
-    url: https://github.com/bank-vaults/bank-vaults.dev/issues
-    about: Suggest an improvement to the documentation
-
   - name: 📚 Documentation
     url: https://bank-vaults.dev/docs/go-library/
     about: Check the documentation for help
+    
+  - name: 📖 Documentation enhancement
+    url: https://github.com/bank-vaults/bank-vaults.dev/issues
+    about: Suggest an improvement to the documentation
 
   - name: 💬 Slack channel
     url: https://outshift.slack.com/messages/bank-vaults
