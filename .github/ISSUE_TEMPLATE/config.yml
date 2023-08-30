@@ -3,6 +3,7 @@ contact_links:
   - name: 📚 Documentation
     url: https://bank-vaults.dev/docs/go-library/
     about: Check the documentation for help
+
   - name: 📖 Documentation enhancement
     url: https://github.com/bank-vaults/bank-vaults.dev/issues
     about: Suggest an improvement to the documentation
