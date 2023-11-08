@@ -18,7 +18,7 @@ go get github.com/bank-vaults/vault-sdk
 
 ## Documentation
 
-Check out the library [documentation](https://bank-vaults.dev/docs/go-library/) on the website or on [pkg.go.dev](https://pkg.go.dev/mod/github.com/bank-vaults/vault-sdk).
+Check out the library documentation on the [Bank-Vaults website](https://bank-vaults.dev/docs/go-library/) or on [pkg.go.dev](https://pkg.go.dev/mod/github.com/bank-vaults/vault-sdk).
 
 ## Development
 
