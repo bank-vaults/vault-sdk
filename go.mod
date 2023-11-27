@@ -5,7 +5,7 @@ go 1.19
 require (
 	cloud.google.com/go/compute/metadata v0.2.3
 	emperror.dev/errors v0.8.1
-	github.com/aws/aws-sdk-go v1.47.5
+	github.com/aws/aws-sdk-go v1.48.4
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/hashicorp/vault/api v1.10.0
 	github.com/leosayous21/go-azure-msi v0.0.0-20210509193526-19353bedcfc8
