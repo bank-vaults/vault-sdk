@@ -9,7 +9,7 @@ require (
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/hashicorp/vault/api v1.10.0
 	github.com/leosayous21/go-azure-msi v0.0.0-20210509193526-19353bedcfc8
-	github.com/spf13/cast v1.5.1
+	github.com/spf13/cast v1.6.0
 	golang.org/x/oauth2 v0.13.0
 	google.golang.org/api v0.142.0
 	gopkg.in/mcuadros/go-syslog.v2 v2.3.0
