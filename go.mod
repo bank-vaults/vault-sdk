@@ -8,7 +8,7 @@ require (
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/hashicorp/vault/api v1.10.0
 	github.com/hashicorp/vault/api/auth/aws v0.5.0
-	github.com/hashicorp/vault/api/auth/azure v0.4.1
+	github.com/hashicorp/vault/api/auth/azure v0.5.0
 	github.com/hashicorp/vault/api/auth/gcp v0.5.0
 	github.com/hashicorp/vault/api/auth/kubernetes v0.5.0
 	github.com/spf13/cast v1.5.1
