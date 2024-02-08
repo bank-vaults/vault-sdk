@@ -17,6 +17,7 @@ package vault
 import (
 	"context"
 	"crypto/sha256"
+	"crypto/tls"
 	"fmt"
 	"net/http"
 	"os"
@@ -35,7 +36,8 @@ import (
 )
 
 const (
-	defaultJWTFile = "/var/run/secrets/kubernetes.io/serviceaccount/token"
+	defaultJWTFile       = "/var/run/secrets/kubernetes.io/serviceaccount/token"
+	sessionCacheCapacity = 64
 )
 
 // NewData is a helper function for Vault KV Version two secret data creation
@@ -573,6 +575,7 @@ func NewInsecureRawClient() (*vaultapi.Client, error) {
 
 	config.HttpClient.Transport.(*http.Transport).TLSHandshakeTimeout = 5 * time.Second
 	config.HttpClient.Transport.(*http.Transport).TLSClientConfig.InsecureSkipVerify = true
+	config.HttpClient.Transport.(*http.Transport).TLSClientConfig.ClientSessionCache = tls.NewLRUClientSessionCache(sessionCacheCapacity)
 
 	return vaultapi.NewClient(config)
 }
