@@ -1,12 +1,26 @@
 version: 2
 
 updates:
-  - package-ecosystem: gomod
-    directory: /
+  - package-ecosystem: "gomod"
+    directory: "/"
+    labels:
+      - "area/dependencies"
     schedule:
-      interval: daily
+      interval: "weekly"
+      day: "sunday"
+      time: "16:00"
+    open-pull-requests-limit: 10
+    groups:
+      auth:
+        patterns:
+          - "github.com/hashicorp/vault/api/auth"
 
-  - package-ecosystem: github-actions
-    directory: /
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    labels:
+      - "area/dependencies"
     schedule:
-      interval: daily
+      interval: "weekly"
+      day: "sunday"
+      time: "16:00"
+    open-pull-requests-limit: 10
