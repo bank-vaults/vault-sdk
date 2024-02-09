@@ -11,7 +11,7 @@ require (
 	github.com/hashicorp/vault/api/auth/azure v0.4.1
 	github.com/hashicorp/vault/api/auth/gcp v0.5.0
 	github.com/hashicorp/vault/api/auth/kubernetes v0.5.0
-	github.com/spf13/cast v1.5.1
+	github.com/spf13/cast v1.6.0
 	gopkg.in/mcuadros/go-syslog.v2 v2.3.0
 )
 
