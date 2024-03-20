@@ -34,25 +34,37 @@ lint-go:
 lint-yaml:
 	yamllint $(if ${CI},-f github,) --no-warnings .
 
+.PHONY: license-check
+license-check: ## Run license check
+	$(LICENSEI_BIN) check
+	$(LICENSEI_BIN) header
+
 .PHONY: check
 check: test lint ## Run lint checks and tests
 
 ##@ Dependencies
 
-deps: bin/golangci-lint
+deps: bin/golangci-lint bin/licensei
 deps: ## Install dependencies
 
 # Dependency versions
 GOLANGCI_VERSION = 1.53.1
+LICENSEI_VERSION = 0.8.0
 
 # Dependency binaries
 GOLANGCI_LINT_BIN := golangci-lint
+LICENSEI_BIN := licensei
 
 # If we have "bin" dir, use those binaries instead
 ifneq ($(wildcard ./bin/.),)
 	GOLANGCI_LINT_BIN := bin/$(GOLANGCI_LINT_BIN)
+	LICENSEI_BIN := bin/$(LICENSEI_BIN)
 endif
 
 bin/golangci-lint:
 	@mkdir -p bin
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | bash -s -- v${GOLANGCI_VERSION}
+
+bin/licensei:
+	@mkdir -p bin
+	curl -sfL https://raw.githubusercontent.com/goph/licensei/master/install.sh | bash -s -- v${LICENSEI_VERSION}

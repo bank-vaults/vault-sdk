@@ -37,6 +37,8 @@
               golangci-lint
 
               yamllint
+            ] ++ [
+              self'.packages.licensei
             ];
 
             scripts = {
@@ -55,6 +57,31 @@
           };
 
           ci = devenv.shells.default;
+        };
+
+        packages = {
+          # TODO: create flake in source repo
+          licensei = pkgs.buildGoModule rec {
+            pname = "licensei";
+            version = "0.8.0";
+
+            src = pkgs.fetchFromGitHub {
+              owner = "goph";
+              repo = "licensei";
+              rev = "v${version}";
+              sha256 = "sha256-Pvjmvfk0zkY2uSyLwAtzWNn5hqKImztkf8S6OhX8XoM=";
+            };
+
+            vendorSha256 = "sha256-ZIpZ2tPLHwfWiBywN00lPI1R7u7lseENIiybL3+9xG8=";
+
+            subPackages = [ "cmd/licensei" ];
+
+            ldflags = [
+              "-w"
+              "-s"
+              "-X main.version=v${version}"
+            ];
+          };
         };
       };
     };

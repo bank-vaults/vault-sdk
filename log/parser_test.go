@@ -24,7 +24,7 @@ import (
 func generateTestLogparts() (format.LogParts, format.LogParts) {
 	logMessageOK := map[string]string{
 		"client":  "10.124.1.33:36977",
-		"content": "2021-10-28T09:31:18Z token-inj /vault/vault-env[1]: time=\"2021-10-28T09:31:18Z\" level=fatal msg=\"failed to inject secrets from vault: key 'value' not found under path: secret/data/dynamodbToken\" app=vault-env facility:0 hostname:10.124.1.33 priority:2 severity:2 tag: timestamp:2021-10-28 09:31:18 +0000 UTC tls_peer:",
+		"content": "2021-10-28T09:31:18Z token-inj /vault/secret-init[1]: time=\"2021-10-28T09:31:18Z\" level=fatal msg=\"failed to inject secrets from vault: key 'value' not found under path: secret/data/dynamodbToken\" app=secret-init facility:0 hostname:10.124.1.33 priority:2 severity:2 tag: timestamp:2021-10-28 09:31:18 +0000 UTC tls_peer:",
 	}
 	logPartsOK := make(map[string]interface{}, len(logMessageOK))
 	for k, v := range logMessageOK {
@@ -108,10 +108,10 @@ func TestGetContentFromLog(t *testing.T) {
 				logParts: logPartsOK,
 			},
 			want: []string{
-				"level=fatal msg=\"failed to inject secrets from vault: key 'value' not found under path: secret/data/dynamodbToken\" app=vault-env facility:0 hostname:10.124.1.33 priority:2 severity:2 tag: timestamp:2021-10-28 09:31:18 +0000 UTC tls_peer:",
+				"level=fatal msg=\"failed to inject secrets from vault: key 'value' not found under path: secret/data/dynamodbToken\" app=secret-init facility:0 hostname:10.124.1.33 priority:2 severity:2 tag: timestamp:2021-10-28 09:31:18 +0000 UTC tls_peer:",
 				"level=fatal",
 				"msg=\"failed to inject secrets from vault: key 'value' not found under path: secret/data/dynamodbToken\"",
-				" app=vault-env facility:0 hostname:10.124.1.33 priority:2 severity:2 tag: timestamp:2021-10-28 09:31:18 +0000 UTC tls_peer:",
+				" app=secret-init facility:0 hostname:10.124.1.33 priority:2 severity:2 tag: timestamp:2021-10-28 09:31:18 +0000 UTC tls_peer:",
 			},
 			wantErr: false,
 		},
@@ -159,10 +159,10 @@ func TestParseLogMessage(t *testing.T) {
 			name: "vault path not found",
 			args: args{
 				content: []string{
-					"level=fatal msg=\"failed to inject secrets from vault: path not found: secret/data/dynamodbToken\" app=vault-env facility:0 hostname:10.124.1.33 priority:2 severity:2 tag: timestamp:2021-10-28 09:31:18 +0000 UTC tls_peer:",
+					"level=fatal msg=\"failed to inject secrets from vault: path not found: secret/data/dynamodbToken\" app=secret-init facility:0 hostname:10.124.1.33 priority:2 severity:2 tag: timestamp:2021-10-28 09:31:18 +0000 UTC tls_peer:",
 					"level=fatal",
 					"msg=\"failed to inject secrets from vault: path not found: secret/data/dynamodbToken\"",
-					" app=vault-env facility:0 hostname:10.124.1.33 priority:2 severity:2 tag: timestamp:2021-10-28 09:31:18 +0000 UTC tls_peer:",
+					" app=secret-init facility:0 hostname:10.124.1.33 priority:2 severity:2 tag: timestamp:2021-10-28 09:31:18 +0000 UTC tls_peer:",
 				},
 			},
 			want: map[string]string{
@@ -173,10 +173,10 @@ func TestParseLogMessage(t *testing.T) {
 			name: "key not found on vault path",
 			args: args{
 				content: []string{
-					"level=fatal msg=\"failed to inject secrets from vault: key 'value' not found under path: secret/data/dynamodbToken\" app=vault-env facility:0 hostname:10.124.1.33 priority:2 severity:2 tag: timestamp:2021-10-28 09:31:18 +0000 UTC tls_peer:",
+					"level=fatal msg=\"failed to inject secrets from vault: key 'value' not found under path: secret/data/dynamodbToken\" app=secret-init facility:0 hostname:10.124.1.33 priority:2 severity:2 tag: timestamp:2021-10-28 09:31:18 +0000 UTC tls_peer:",
 					"level=fatal",
 					"msg=\"failed to inject secrets from vault: key 'value' not found under path: secret/data/dynamodbToken\"",
-					" app=vault-env facility:0 hostname:10.124.1.33 priority:2 severity:2 tag: timestamp:2021-10-28 09:31:18 +0000 UTC tls_peer:",
+					" app=secret-init facility:0 hostname:10.124.1.33 priority:2 severity:2 tag: timestamp:2021-10-28 09:31:18 +0000 UTC tls_peer:",
 				},
 			},
 			want: map[string]string{
@@ -187,14 +187,14 @@ func TestParseLogMessage(t *testing.T) {
 			name: "tls error",
 			args: args{
 				content: []string{
-					"level=error msg=\"failed to request new Vault token\" app=vault-env err=\"Put \\\"https://vault.securecn-vault:8200/v1/auth/kubernetes/login\\\": x509: certificate signed by unknown authority (possibly because of \\\"crypto/rsa: verification error\\\" while trying to verify candidate authority certificate \\\"Root CA\\\")\"",
+					"level=error msg=\"failed to request new Vault token\" app=secret-init err=\"Put \\\"https://vault.securecn-vault:8200/v1/auth/kubernetes/login\\\": x509: certificate signed by unknown authority (possibly because of \\\"crypto/rsa: verification error\\\" while trying to verify candidate authority certificate \\\"Root CA\\\")\"",
 					"level=error",
 					"msg=\"failed to request new Vault token\"",
-					" app=vault-env err=\"Put \\\"https://vault.securecn-vault:8200/v1/auth/kubernetes/login\\\": x509: certificate signed by unknown authority (possibly because of \\\"crypto/rsa: verification error\\\" while trying to verify candidate authority certificate \\\"Root CA\\\")\"",
+					" app=secret-init err=\"Put \\\"https://vault.securecn-vault:8200/v1/auth/kubernetes/login\\\": x509: certificate signed by unknown authority (possibly because of \\\"crypto/rsa: verification error\\\" while trying to verify candidate authority certificate \\\"Root CA\\\")\"",
 				},
 			},
 			want: map[string]string{
-				ConnectionError: "msg=\"failed to request new Vault token\"  app=vault-env err=\"Put \\\"https://vault.securecn-vault:8200/v1/auth/kubernetes/login\\\": x509: certificate signed by unknown authority (possibly because of \\\"crypto/rsa: verification error\\\" while trying to verify candidate authority certificate \\\"Root CA\\\")\"",
+				ConnectionError: "msg=\"failed to request new Vault token\"  app=secret-init err=\"Put \\\"https://vault.securecn-vault:8200/v1/auth/kubernetes/login\\\": x509: certificate signed by unknown authority (possibly because of \\\"crypto/rsa: verification error\\\" while trying to verify candidate authority certificate \\\"Root CA\\\")\"",
 			},
 		},
 	}
