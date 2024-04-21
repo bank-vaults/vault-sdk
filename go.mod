@@ -3,7 +3,7 @@ module github.com/bank-vaults/vault-sdk
 go 1.19
 
 require (
-	cloud.google.com/go/compute/metadata v0.2.3
+	cloud.google.com/go/compute/metadata v0.3.0
 	emperror.dev/errors v0.8.1
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/hashicorp/vault/api v1.12.2
@@ -16,7 +16,6 @@ require (
 )
 
 require (
-	cloud.google.com/go/compute v1.23.4 // indirect
 	cloud.google.com/go/iam v1.1.6 // indirect
 	github.com/aws/aws-sdk-go v1.50.15 // indirect
 	github.com/cenkalti/backoff/v3 v3.2.2 // indirect
