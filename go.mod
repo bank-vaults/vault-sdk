@@ -1,6 +1,6 @@
 module github.com/bank-vaults/vault-sdk
 
-go 1.22
+go 1.22.2
 
 require (
 	cloud.google.com/go/compute/metadata v0.3.0
