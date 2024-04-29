@@ -13,10 +13,7 @@ updates:
     groups:
       vault/api/auth:
         patterns:
-          - "github.com/hashicorp/vault/api/auth/aws"
-          - "github.com/hashicorp/vault/api/auth/azure"
-          - "github.com/hashicorp/vault/api/auth/gcp"
-          - "github.com/hashicorp/vault/api/auth/kubernetes"
+          - "github.com/hashicorp/vault/api/auth/*"
 
   - package-ecosystem: "github-actions"
     directory: "/"
