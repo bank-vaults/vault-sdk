@@ -11,9 +11,12 @@ updates:
       time: "16:00"
     open-pull-requests-limit: 10
     groups:
-      auth:
+      vault/api/auth:
         patterns:
-          - "github.com/hashicorp/vault/api/auth"
+          - "github.com/hashicorp/vault/api/auth/aws"
+          - "github.com/hashicorp/vault/api/auth/azure"
+          - "github.com/hashicorp/vault/api/auth/gcp"
+          - "github.com/hashicorp/vault/api/auth/kubernetes"
 
   - package-ecosystem: "github-actions"
     directory: "/"
