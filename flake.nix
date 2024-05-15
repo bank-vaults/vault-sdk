@@ -3,7 +3,6 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    nixpkgs-23-05.url = "github:NixOS/nixpkgs/release-23.05";
     flake-parts.url = "github:hercules-ci/flake-parts";
     devenv.url = "github:cachix/devenv";
   };
@@ -21,6 +20,13 @@
           default = {
             languages = {
               go.enable = true;
+            };
+
+            services = {
+              vault = {
+                enable = true;
+                package = self'.packages.vault;
+              };
             };
 
             pre-commit.hooks = {
