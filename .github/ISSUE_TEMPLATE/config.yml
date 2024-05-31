@@ -1,7 +1,7 @@
 blank_issues_enabled: true
 contact_links:
   - name: 📚 Documentation
-    url: https://bank-vaults.dev/docs/go-library/
+    url: https://bank-vaults.dev/docs/go-library
     about: Check the documentation for help
 
   - name: 📖 Documentation enhancement
