@@ -469,7 +469,7 @@ func (client *Client) getVaultAPISecret(jwtFile string, o *clientOptions) (*vaul
 		return gcpAuth.Login(context.Background(), client.RawClient())
 
 	case GCPIAMAuthMethod:
-		serviceAccountEmail, err := metadata.NewClient(nil).Email("default")
+		serviceAccountEmail, err := metadata.EmailWithContext(context.Background(), "default")
 		if err != nil {
 			return nil, err
 		}
