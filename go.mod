@@ -3,7 +3,7 @@ module github.com/bank-vaults/vault-sdk
 go 1.22
 
 require (
-	cloud.google.com/go/compute/metadata v0.3.0
+	cloud.google.com/go/compute/metadata v0.4.0
 	emperror.dev/errors v0.8.1
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/hashicorp/vault/api v1.14.0
