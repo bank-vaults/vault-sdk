@@ -35,6 +35,12 @@ Fetch required tools:
 make deps
 ```
 
+Run project dependencies:
+
+```shell
+make up
+```
+
 Run the test suite:
 
 ```shell
@@ -51,6 +57,12 @@ Some linter violations can automatically be fixed:
 
 ```shell
 make fmt
+```
+
+Once you are done, you can tear down project dependencies:
+
+```shell
+make down
 ```
 
 ## License
