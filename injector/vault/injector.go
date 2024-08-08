@@ -26,7 +26,7 @@ import (
 	vaultapi "github.com/hashicorp/vault/api"
 	"github.com/spf13/cast"
 
-	"github.com/bank-vaults/vault-sdk/templater"
+	"github.com/bank-vaults/vault-sdk/utils/templater"
 	"github.com/bank-vaults/vault-sdk/vault"
 )
 
