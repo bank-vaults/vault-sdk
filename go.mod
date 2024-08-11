@@ -14,7 +14,7 @@ require (
 	github.com/hashicorp/vault/api/auth/azure v0.6.0
 	github.com/hashicorp/vault/api/auth/gcp v0.7.0
 	github.com/hashicorp/vault/api/auth/kubernetes v0.7.0
-	github.com/spf13/cast v1.6.0
+	github.com/spf13/cast v1.7.0
 	github.com/stretchr/testify v1.9.0
 	gocloud.dev v0.38.0
 	gopkg.in/mcuadros/go-syslog.v2 v2.3.0
