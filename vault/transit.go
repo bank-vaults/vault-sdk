@@ -84,7 +84,6 @@ func (t *Transit) DecryptBatch(transitPath, keyID string, ciphertexts []string) 
 	ret := map[string][]byte{}
 	for k, val := range out.Data["batch_results"].([]interface{}) {
 		ret[ciphertexts[k]], err = base64.StdEncoding.DecodeString(val.(map[string]interface{})["plaintext"].(string))
-
 		if err != nil {
 			return nil, err
 		}
