@@ -449,6 +449,10 @@ func (i *SecretInjector) readBaoPath(path, versionOrData string, update bool) (m
 	return secretData, nil
 }
 
+func IsValidPrefix(value string) bool {
+	return strings.HasPrefix(value, "bao:") || strings.HasPrefix(value, ">>bao:")
+}
+
 func HasInlineBaoDelimiters(value string) bool {
 	return len(FindInlineBaoDelimiters(value)) > 0
 }

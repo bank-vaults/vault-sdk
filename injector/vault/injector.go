@@ -449,6 +449,10 @@ func (i *SecretInjector) readVaultPath(path, versionOrData string, update bool) 
 	return secretData, nil
 }
 
+func IsValidPrefix(value string) bool {
+	return strings.HasPrefix(value, "vault:") || strings.HasPrefix(value, ">>vault:")
+}
+
 func HasInlineVaultDelimiters(value string) bool {
 	return len(FindInlineVaultDelimiters(value)) > 0
 }
