@@ -44,7 +44,7 @@ lint-yaml:
 	yamllint $(if ${CI},-f github,) --no-warnings .
 
 .PHONY: test
-test: ## Run tests
+test: up ## Run tests
 	go test -race -v ./...
 
 .PHONY: license-check
