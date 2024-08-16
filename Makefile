@@ -44,8 +44,21 @@ lint-yaml:
 	yamllint $(if ${CI},-f github,) --no-warnings .
 
 .PHONY: test
-test: up ## Run tests
-	go test -race -v ./...
+test: test-sdk test-injector-vault test-injector-bao ## Run tests
+
+targets := $(shell go list ./... | grep -v '/injector')
+
+.PHONY: test-sdk
+test-sdk: ## Run tests for SDK
+	go test -race -v $(targets)
+
+.PHONY: test-injector-vault
+test-injector-vault: up ## Run tests for vault-injector
+	go test -race -v ./injector/vault
+
+.PHONY: test-injector-bao
+test-injector-bao: up ## Run tests for bao-injector
+	go test -race -v ./injector/bao
 
 .PHONY: license-check
 license-check: ## Run license check

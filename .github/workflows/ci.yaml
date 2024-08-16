@@ -13,8 +13,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  test:
-    name: Test
+  test-sdk:
+    name: Test-SDK
     runs-on: ubuntu-latest
     strategy:
       # Fail fast is disabled because there are Go version specific features and tests
@@ -32,13 +32,80 @@ jobs:
         with:
           go-version: ${{ matrix.go }}
 
-      - name: Test
+      - name: Test-SDK
         env:
           VAULT_ADDR: "http://127.0.0.1:8200"
           VAULT_TOKEN: "227e1cce-6bf7-30bb-2d2a-acc854318caf"
           BAO_ADDR: "http://127.0.0.1:8300"
           BAO_TOKEN: "227e1cce-6bf7-30bb-2d2a-acc854318caf"
-        run: make test
+        run: make test-sdk
+
+  test-injector-vault:
+    name: Test-Injector-Vault
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+
+      - name: Set up Nix
+        uses: cachix/install-nix-action@ba0dd844c9180cbf77aa72a116d6fbc515d0e87b # v27
+        with:
+          extra_nix_config: |
+            access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up magic Nix cache
+        uses: DeterminateSystems/magic-nix-cache-action@b46e247b898aa56e6d2d2e728dc6df6c84fdb738 # v7
+
+      - name: Set up Go cache
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ github.job }}-${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ github.job }}-${{ runner.os }}-go-
+
+      - name: Prepare Nix shell
+        run: nix develop --impure .#ci
+
+      - name: Test-Injector-Vault
+        run: nix develop --impure .#ci -c make test-injector-vault
+
+
+  test-injector-bao:
+    name: Test-Injector-Bao
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+
+      - name: Set up Nix
+        uses: cachix/install-nix-action@ba0dd844c9180cbf77aa72a116d6fbc515d0e87b # v27
+        with:
+          extra_nix_config: |
+            access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up magic Nix cache
+        uses: DeterminateSystems/magic-nix-cache-action@b46e247b898aa56e6d2d2e728dc6df6c84fdb738 # v7
+
+      - name: Set up Go cache
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ github.job }}-${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ github.job }}-${{ runner.os }}-go-
+
+      - name: Prepare Nix shell
+        run: nix develop --impure .#ci
+
+      - name: Test-Injector-Bao
+        run: nix develop --impure .#ci -c make test-injector-bao
 
   lint:
     name: Lint
