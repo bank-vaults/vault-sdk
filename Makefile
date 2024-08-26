@@ -27,10 +27,6 @@ down: ## Destroy development environment
 .PHONY: check
 check: lint test ## Run lint checks and tests
 
-.PHONY: fmt
-fmt: ## Format code
-	$(GOLANGCI_LINT_BIN) run --fix
-
 .PHONY: lint
 lint: lint-go lint-yaml
 lint: ## Run linters
@@ -41,7 +37,7 @@ lint-go:
 
 .PHONY: lint-yaml
 lint-yaml:
-	yamllint $(if ${CI},-f github,) --no-warnings .
+	$(YAMLLINT_BIN) $(if ${CI},-f github,) --no-warnings .
 
 .PHONY: test
 test: test-sdk test-injector-vault test-injector-bao ## Run tests
@@ -60,6 +56,10 @@ test-injector-vault: up ## Run tests for vault-injector
 test-injector-bao: up ## Run tests for bao-injector
 	go test -race -v ./injector/bao
 
+.PHONY: fmt
+fmt: ## Format code
+	$(GOLANGCI_LINT_BIN) run --fix
+
 .PHONY: license-check
 license-check: ## Run license check
 	$(LICENSEI_BIN) check
@@ -67,16 +67,19 @@ license-check: ## Run license check
 
 ##@ Dependencies
 
-deps: bin/golangci-lint bin/licensei
-deps: ## Install dependencies
-
 # Dependency versions
-GOLANGCI_VERSION = 1.59.1
+GOLANGCI_LINT_VERSION = 1.60.3
 LICENSEI_VERSION = 0.9.0
 
 # Dependency binaries
 GOLANGCI_LINT_BIN := golangci-lint
 LICENSEI_BIN := licensei
+
+# TODO: add support for yamllint dependency
+YAMLLINT_BIN := yamllint
+
+deps: bin/golangci-lint bin/licensei
+deps: ## Install dependencies
 
 # If we have "bin" dir, use those binaries instead
 ifneq ($(wildcard ./bin/.),)
@@ -86,7 +89,7 @@ endif
 
 bin/golangci-lint:
 	@mkdir -p bin
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | bash -s -- v${GOLANGCI_VERSION}
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | bash -s -- v${GOLANGCI_LINT_VERSION}
 
 bin/licensei:
 	@mkdir -p bin
