@@ -37,8 +37,7 @@
             packages = with pkgs; [
               gnumake
 
-              # Enable this once Nix builds golangci-lint with Go 1.23
-              # golangci-lint
+              golangci-lint
               yamllint
             ] ++ [
               self'.packages.licensei
