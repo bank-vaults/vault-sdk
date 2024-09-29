@@ -3,7 +3,7 @@ module github.com/bank-vaults/vault-sdk
 go 1.23
 
 require (
-	cloud.google.com/go/compute/metadata v0.5.1
+	cloud.google.com/go/compute/metadata v0.5.2
 	cloud.google.com/go/kms v1.20.0
 	emperror.dev/errors v0.8.1
 	github.com/Masterminds/sprig/v3 v3.3.0
