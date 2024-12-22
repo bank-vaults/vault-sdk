@@ -4,7 +4,7 @@ go 1.23
 
 require (
 	cloud.google.com/go/compute/metadata v0.6.0
-	cloud.google.com/go/kms v1.20.2
+	cloud.google.com/go/kms v1.20.3
 	emperror.dev/errors v0.8.1
 	github.com/Masterminds/sprig/v3 v3.3.0
 	github.com/aws/aws-sdk-go v1.55.5
