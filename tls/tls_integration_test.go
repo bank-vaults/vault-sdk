@@ -125,7 +125,9 @@ func TestGenerateTLS(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			resp.Body.Close()
+			if err := resp.Body.Close(); err != nil {
+				t.Fatal(err)
+			}
 		})
 	}
 
@@ -228,7 +230,9 @@ func TestLoadAndRegenerateTLS(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			resp.Body.Close()
+			if err := resp.Body.Close(); err != nil {
+				t.Fatal(err)
+			}
 		})
 	}
 

@@ -49,7 +49,7 @@ func GetContentFromLog(logParts syslogformat.LogParts) ([]string, error) {
 
 func ParseLogMessage(content []string) map[string]string {
 	parsedError := make(map[string]string)
-	if !(strings.Contains(content[1], "error") || strings.Contains(content[1], "fatal")) {
+	if !strings.Contains(content[1], "error") && !strings.Contains(content[1], "fatal") {
 		return nil
 	}
 	if path := pathNotFoundRegexp.FindStringSubmatch(content[2]); path != nil {

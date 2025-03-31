@@ -136,7 +136,11 @@ func blobRead(urlstr string) (string, error) {
 	if err != nil {
 		return "", errors.Wrapf(err, "failed to open blob bucket: %s", u.String())
 	}
-	defer bucket.Close()
+	defer func() {
+		if err := bucket.Close(); err != nil {
+			fmt.Fprintf(os.Stderr, "failed to close bucket: %v\n", err)
+		}
+	}()
 
 	data, err := bucket.ReadAll(ctx, key)
 	if err != nil {

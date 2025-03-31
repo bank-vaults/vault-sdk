@@ -112,7 +112,7 @@ func (co ClientTimeout) apply(o *clientOptions) {
 }
 
 // ClientLogger wraps a logur.Logger compatible logger to be used in the client.
-func ClientLogger(logger Logger) clientLogger { //nolint:revive
+func ClientLogger(logger Logger) clientLogger {
 	return clientLogger{logger: logger}
 }
 
@@ -138,8 +138,6 @@ func (co ExistingSecret) apply(o *clientOptions) {
 }
 
 // Vault Enterprise Namespace (not Kubernetes namespace)
-//
-//nolint:revive
 type VaultNamespace string
 
 func (co VaultNamespace) apply(o *clientOptions) {
