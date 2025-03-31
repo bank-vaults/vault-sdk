@@ -150,7 +150,7 @@ func (i *SecretInjector) preprocessTransitSecrets(references *map[string]string,
 			i.mu.RLock()
 			for _, vaultSecretReference := range FindInlineVaultDelimiters(value) {
 				if v, ok := i.transitCache[vaultSecretReference[0]]; ok {
-					newValue = strings.Replace(value, vaultSecretReference[0], string(v), -1)
+					newValue = strings.ReplaceAll(value, vaultSecretReference[0], string(v))
 				}
 			}
 			i.mu.RUnlock()
@@ -194,7 +194,7 @@ func (i *SecretInjector) InjectSecretsFromVault(references map[string]string, in
 					return err
 				}
 				for _, v := range mapData {
-					value = strings.Replace(value, vaultSecretReference[0], v, -1)
+					value = strings.ReplaceAll(value, vaultSecretReference[0], v)
 				}
 			}
 			inject(name, value)
