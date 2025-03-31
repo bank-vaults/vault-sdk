@@ -1,8 +1,6 @@
 module github.com/bank-vaults/vault-sdk
 
-go 1.23.0
-
-toolchain go1.24.1
+go 1.24.1
 
 require (
 	cloud.google.com/go/compute/metadata v0.6.0
@@ -135,5 +133,3 @@ require (
 	google.golang.org/protobuf v1.36.5 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
-
-exclude google.golang.org/grpc v1.69.0

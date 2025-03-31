@@ -20,6 +20,7 @@
           default = {
             languages = {
               go.enable = true;
+              go.package = pkgs.go_1_24;
             };
 
             services = {
