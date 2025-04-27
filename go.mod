@@ -7,7 +7,7 @@ require (
 	cloud.google.com/go/kms v1.21.2
 	emperror.dev/errors v0.8.1
 	github.com/Masterminds/sprig/v3 v3.3.0
-	github.com/aws/aws-sdk-go v1.55.6
+	github.com/aws/aws-sdk-go v1.55.7
 	github.com/fsnotify/fsnotify v1.9.0
 	github.com/hashicorp/vault/api v1.16.0
 	github.com/hashicorp/vault/api/auth/aws v0.9.0
