@@ -15,6 +15,7 @@
 package bao
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -68,6 +69,10 @@ func NewSecretInjector(config Config, client *bao.Client, renewer SecretRenewer,
 var inlineMutationRegex = regexp.MustCompile(`\${([>]{0,2}bao:.*?#*}?)}`)
 
 func (i *SecretInjector) FetchTransitSecrets(secrets []string) (map[string][]byte, error) {
+	return i.FetchTransitSecretsWithContext(context.Background(), secrets)
+}
+
+func (i *SecretInjector) FetchTransitSecretsWithContext(ctx context.Context, secrets []string) (map[string][]byte, error) {
 	if len(i.config.TransitKeyID) == 0 {
 		return map[string][]byte{}, errors.Errorf("found encrypted variable, but transit key ID is empty: %s", "todo")
 	}
@@ -76,7 +81,7 @@ func (i *SecretInjector) FetchTransitSecrets(secrets []string) (map[string][]byt
 		return map[string][]byte{}, nil
 	}
 
-	out, err := i.client.Transit.DecryptBatch(i.config.TransitPath, i.config.TransitKeyID, secrets)
+	out, err := i.client.Transit.DecryptBatchWithContext(ctx, i.config.TransitPath, i.config.TransitKeyID, secrets)
 	if err != nil {
 		i.logger.Error(fmt.Sprintf("failed to decrypt variable: %s", err))
 	}
@@ -181,6 +186,10 @@ func (i *SecretInjector) preprocessTransitSecrets(references *map[string]string,
 }
 
 func (i *SecretInjector) InjectSecretsFromBao(references map[string]string, inject SecretInjectorFunc) error {
+	return i.InjectSecretsFromBaoWithContext(context.Background(), references, inject)
+}
+
+func (i *SecretInjector) InjectSecretsFromBaoWithContext(ctx context.Context, references map[string]string, inject SecretInjectorFunc) error {
 	err := i.preprocessTransitSecrets(&references, inject)
 	if err != nil && !i.config.IgnoreMissingSecrets {
 		return errors.Wrapf(err, "unable to preprocess transit secrets")
@@ -189,7 +198,7 @@ func (i *SecretInjector) InjectSecretsFromBao(references map[string]string, inje
 	for name, value := range references {
 		if HasInlineBaoDelimiters(value) {
 			for _, baoSecretReference := range FindInlineBaoDelimiters(value) {
-				mapData, err := i.GetDataFromBao(map[string]string{name: baoSecretReference[1]})
+				mapData, err := i.GetDataFromBaoWithContext(ctx, map[string]string{name: baoSecretReference[1]})
 				if err != nil {
 					return err
 				}
@@ -242,7 +251,7 @@ func (i *SecretInjector) InjectSecretsFromBao(references map[string]string, inje
 				continue
 			}
 
-			out, err := i.client.Transit.Decrypt(i.config.TransitPath, i.config.TransitKeyID, []byte(value))
+			out, err := i.client.Transit.DecryptWithContext(ctx, i.config.TransitPath, i.config.TransitKeyID, []byte(value))
 			if err != nil {
 				if !i.config.IgnoreMissingSecrets {
 					return errors.Wrapf(err, "failed to decrypt variable: %s", name)
@@ -285,7 +294,7 @@ func (i *SecretInjector) InjectSecretsFromBao(references map[string]string, inje
 
 		i.mu.RLock()
 		if data = i.secretCache[secretCacheKey]; data == nil {
-			data, err = i.readBaoPath(valuePath, versionOrData, update)
+			data, err = i.readBaoPath(ctx, valuePath, versionOrData, update)
 		}
 		i.mu.RUnlock()
 
@@ -331,6 +340,10 @@ func (i *SecretInjector) InjectSecretsFromBao(references map[string]string, inje
 }
 
 func (i *SecretInjector) InjectSecretsFromBaoPath(paths string, inject SecretInjectorFunc) error {
+	return i.InjectSecretsFromBaoPathWithContext(context.Background(), paths, inject)
+}
+
+func (i *SecretInjector) InjectSecretsFromBaoPathWithContext(ctx context.Context, paths string, inject SecretInjectorFunc) error {
 	baoPaths := strings.Split(paths, ",")
 
 	for _, path := range baoPaths {
@@ -343,7 +356,7 @@ func (i *SecretInjector) InjectSecretsFromBaoPath(paths string, inject SecretInj
 			version = split[1]
 		}
 
-		data, err := i.readBaoPath(valuePath, version, false)
+		data, err := i.readBaoPath(ctx, valuePath, version, false)
 		if err != nil {
 			return err
 		}
@@ -369,7 +382,7 @@ func (i *SecretInjector) InjectSecretsFromBaoPath(paths string, inject SecretInj
 	return nil
 }
 
-func (i *SecretInjector) readBaoPath(path, versionOrData string, update bool) (map[string]interface{}, error) {
+func (i *SecretInjector) readBaoPath(ctx context.Context, path, versionOrData string, update bool) (map[string]interface{}, error) {
 	var secretData map[string]interface{}
 
 	var secret *baoapi.Secret
@@ -382,12 +395,12 @@ func (i *SecretInjector) readBaoPath(path, versionOrData string, update bool) (m
 			return nil, errors.Wrap(err, "failed to unmarshal data for writing")
 		}
 
-		secret, err = i.client.RawClient().Logical().Write(path, data)
+		secret, err = i.client.RawClient().Logical().WriteWithContext(ctx, path, data)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to write secret to path: %s", path)
 		}
 	} else {
-		secret, err = i.client.RawClient().Logical().ReadWithData(path, map[string][]string{"version": {versionOrData}})
+		secret, err = i.client.RawClient().Logical().ReadWithDataWithContext(ctx, path, map[string][]string{"version": {versionOrData}})
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to read secret from path: %s", path)
 		}
@@ -462,6 +475,10 @@ func FindInlineBaoDelimiters(value string) [][]string {
 }
 
 func (i *SecretInjector) GetDataFromBao(data map[string]string) (map[string]string, error) {
+	return i.GetDataFromBaoWithContext(context.Background(), data)
+}
+
+func (i *SecretInjector) GetDataFromBaoWithContext(ctx context.Context, data map[string]string) (map[string]string, error) {
 	baoData := make(map[string]string, len(data))
 
 	inject := func(key, value string) {

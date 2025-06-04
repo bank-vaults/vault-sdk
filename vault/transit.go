@@ -15,6 +15,7 @@
 package vault
 
 import (
+	"context"
 	"encoding/base64"
 	"path"
 	"regexp"
@@ -40,12 +41,19 @@ func (t *Transit) IsEncrypted(value string) bool {
 // Decrypt decrypts the ciphertext into a plaintext
 // ref: https://www.vaultproject.io/api/secret/transit/index.html#decrypt-data
 func (t *Transit) Decrypt(transitPath, keyID string, ciphertext []byte) ([]byte, error) {
+	return t.DecryptWithContext(context.Background(), transitPath, keyID, ciphertext)
+}
+
+// DecryptWithContext decrypts the ciphertext into a plaintext with context
+// ref: https://www.vaultproject.io/api/secret/transit/index.html#decrypt-data
+func (t *Transit) DecryptWithContext(ctx context.Context, transitPath, keyID string, ciphertext []byte) ([]byte, error) {
 	if len(transitPath) == 0 {
 		// Rewrite to default if not defined, all examples from documentation
 		// uses `transit` path
 		transitPath = "transit"
 	}
-	out, err := t.client.Logical().Write(
+	out, err := t.client.Logical().WriteWithContext(
+		ctx,
 		path.Join(transitPath, "decrypt", keyID),
 		map[string]interface{}{
 			"ciphertext": string(ciphertext),
@@ -58,6 +66,10 @@ func (t *Transit) Decrypt(transitPath, keyID string, ciphertext []byte) ([]byte,
 }
 
 func (t *Transit) DecryptBatch(transitPath, keyID string, ciphertexts []string) (map[string][]byte, error) {
+	return t.DecryptBatchWithContext(context.Background(), transitPath, keyID, ciphertexts)
+}
+
+func (t *Transit) DecryptBatchWithContext(ctx context.Context, transitPath, keyID string, ciphertexts []string) (map[string][]byte, error) {
 	if len(transitPath) == 0 {
 		// Rewrite to default if not defined, all examples from documentation
 		// uses `transit` path
@@ -71,7 +83,8 @@ func (t *Transit) DecryptBatch(transitPath, keyID string, ciphertexts []string) 
 		})
 	}
 
-	out, err := t.client.Logical().Write(
+	out, err := t.client.Logical().WriteWithContext(
+		ctx,
 		path.Join(transitPath, "decrypt", keyID),
 		map[string]interface{}{
 			"batch_input": batchInput,
