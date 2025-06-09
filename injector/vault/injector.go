@@ -15,6 +15,7 @@
 package vault
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -68,6 +69,10 @@ func NewSecretInjector(config Config, client *vault.Client, renewer SecretRenewe
 var inlineMutationRegex = regexp.MustCompile(`\${([>]{0,2}vault:.*?#*}?)}`)
 
 func (i *SecretInjector) FetchTransitSecrets(secrets []string) (map[string][]byte, error) {
+	return i.FetchTransitSecretsWithContext(context.Background(), secrets)
+}
+
+func (i *SecretInjector) FetchTransitSecretsWithContext(ctx context.Context, secrets []string) (map[string][]byte, error) {
 	if len(i.config.TransitKeyID) == 0 {
 		return map[string][]byte{}, errors.Errorf("found encrypted variable, but transit key ID is empty: %s", "todo")
 	}
@@ -76,7 +81,7 @@ func (i *SecretInjector) FetchTransitSecrets(secrets []string) (map[string][]byt
 		return map[string][]byte{}, nil
 	}
 
-	out, err := i.client.Transit.DecryptBatch(i.config.TransitPath, i.config.TransitKeyID, secrets)
+	out, err := i.client.Transit.DecryptBatchWithContext(ctx, i.config.TransitPath, i.config.TransitKeyID, secrets)
 	if err != nil {
 		i.logger.Error(fmt.Sprintf("failed to decrypt variable: %s", err))
 	}
@@ -106,7 +111,7 @@ func paginate(secrets []string, batchSize int) [][]string {
 	return transitSecrets
 }
 
-func (i *SecretInjector) preprocessTransitSecrets(references *map[string]string, inject SecretInjectorFunc) error {
+func (i *SecretInjector) preprocessTransitSecrets(ctx context.Context, references *map[string]string, inject SecretInjectorFunc) error {
 	// use set so that we don't have duplicates
 	secretSet := map[string]bool{}
 
@@ -134,7 +139,7 @@ func (i *SecretInjector) preprocessTransitSecrets(references *map[string]string,
 	i.mu.RUnlock()
 
 	for _, sec := range paginate(secrets, i.config.TransitBatchSize) {
-		_, err := i.FetchTransitSecrets(sec)
+		_, err := i.FetchTransitSecretsWithContext(ctx, sec)
 		if err != nil {
 			if !i.config.IgnoreMissingSecrets {
 				return errors.Wrapf(err, "failed to decrypt secret: %s", sec)
@@ -181,7 +186,11 @@ func (i *SecretInjector) preprocessTransitSecrets(references *map[string]string,
 }
 
 func (i *SecretInjector) InjectSecretsFromVault(references map[string]string, inject SecretInjectorFunc) error {
-	err := i.preprocessTransitSecrets(&references, inject)
+	return i.InjectSecretsFromVaultWithContext(context.Background(), references, inject)
+}
+
+func (i *SecretInjector) InjectSecretsFromVaultWithContext(ctx context.Context, references map[string]string, inject SecretInjectorFunc) error {
+	err := i.preprocessTransitSecrets(ctx, &references, inject)
 	if err != nil && !i.config.IgnoreMissingSecrets {
 		return errors.Wrapf(err, "unable to preprocess transit secrets")
 	}
@@ -189,7 +198,7 @@ func (i *SecretInjector) InjectSecretsFromVault(references map[string]string, in
 	for name, value := range references {
 		if HasInlineVaultDelimiters(value) {
 			for _, vaultSecretReference := range FindInlineVaultDelimiters(value) {
-				mapData, err := i.GetDataFromVault(map[string]string{name: vaultSecretReference[1]})
+				mapData, err := i.GetDataFromVaultWithContext(ctx, map[string]string{name: vaultSecretReference[1]})
 				if err != nil {
 					return err
 				}
@@ -242,7 +251,7 @@ func (i *SecretInjector) InjectSecretsFromVault(references map[string]string, in
 				continue
 			}
 
-			out, err := i.client.Transit.Decrypt(i.config.TransitPath, i.config.TransitKeyID, []byte(value))
+			out, err := i.client.Transit.DecryptWithContext(ctx, i.config.TransitPath, i.config.TransitKeyID, []byte(value))
 			if err != nil {
 				if !i.config.IgnoreMissingSecrets {
 					return errors.Wrapf(err, "failed to decrypt variable: %s", name)
@@ -285,7 +294,7 @@ func (i *SecretInjector) InjectSecretsFromVault(references map[string]string, in
 
 		i.mu.RLock()
 		if data = i.secretCache[secretCacheKey]; data == nil {
-			data, err = i.readVaultPath(valuePath, versionOrData, update)
+			data, err = i.readVaultPath(ctx, valuePath, versionOrData, update)
 		}
 		i.mu.RUnlock()
 
@@ -331,6 +340,10 @@ func (i *SecretInjector) InjectSecretsFromVault(references map[string]string, in
 }
 
 func (i *SecretInjector) InjectSecretsFromVaultPath(paths string, inject SecretInjectorFunc) error {
+	return i.InjectSecretsFromVaultPathWithContext(context.Background(), paths, inject)
+}
+
+func (i *SecretInjector) InjectSecretsFromVaultPathWithContext(ctx context.Context, paths string, inject SecretInjectorFunc) error {
 	vaultPaths := strings.Split(paths, ",")
 
 	for _, path := range vaultPaths {
@@ -343,7 +356,7 @@ func (i *SecretInjector) InjectSecretsFromVaultPath(paths string, inject SecretI
 			version = split[1]
 		}
 
-		data, err := i.readVaultPath(valuePath, version, false)
+		data, err := i.readVaultPath(ctx, valuePath, version, false)
 		if err != nil {
 			return err
 		}
@@ -369,7 +382,7 @@ func (i *SecretInjector) InjectSecretsFromVaultPath(paths string, inject SecretI
 	return nil
 }
 
-func (i *SecretInjector) readVaultPath(path, versionOrData string, update bool) (map[string]interface{}, error) {
+func (i *SecretInjector) readVaultPath(ctx context.Context, path, versionOrData string, update bool) (map[string]interface{}, error) {
 	var secretData map[string]interface{}
 
 	var secret *vaultapi.Secret
@@ -382,12 +395,12 @@ func (i *SecretInjector) readVaultPath(path, versionOrData string, update bool) 
 			return nil, errors.Wrap(err, "failed to unmarshal data for writing")
 		}
 
-		secret, err = i.client.RawClient().Logical().Write(path, data)
+		secret, err = i.client.RawClient().Logical().WriteWithContext(ctx, path, data)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to write secret to path: %s", path)
 		}
 	} else {
-		secret, err = i.client.RawClient().Logical().ReadWithData(path, map[string][]string{"version": {versionOrData}})
+		secret, err = i.client.RawClient().Logical().ReadWithDataWithContext(ctx, path, map[string][]string{"version": {versionOrData}})
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to read secret from path: %s", path)
 		}
@@ -462,11 +475,15 @@ func FindInlineVaultDelimiters(value string) [][]string {
 }
 
 func (i *SecretInjector) GetDataFromVault(data map[string]string) (map[string]string, error) {
+	return i.GetDataFromVaultWithContext(context.Background(), data)
+}
+
+func (i *SecretInjector) GetDataFromVaultWithContext(ctx context.Context, data map[string]string) (map[string]string, error) {
 	vaultData := make(map[string]string, len(data))
 
 	inject := func(key, value string) {
 		vaultData[key] = value
 	}
 
-	return vaultData, i.InjectSecretsFromVault(data, inject)
+	return vaultData, i.InjectSecretsFromVaultWithContext(ctx, data, inject)
 }

@@ -214,12 +214,17 @@ func NewClientWithConfig(config *vaultapi.Config, role, path string) (*Client, e
 
 // NewClientFromConfig creates a new Vault client from custom configuration.
 func NewClientFromConfig(config *vaultapi.Config, opts ...ClientOption) (*Client, error) {
+	return NewClientFromConfigWithContext(context.Background(), config, opts...)
+}
+
+// NewClientFromConfig creates a new Vault client from custom configuration with context.
+func NewClientFromConfigWithContext(ctx context.Context, config *vaultapi.Config, opts ...ClientOption) (*Client, error) {
 	rawClient, err := vaultapi.NewClient(config)
 	if err != nil {
 		return nil, err
 	}
 
-	client, err := NewClientFromRawClient(rawClient, opts...)
+	client, err := NewClientFromRawClientWithContext(ctx, rawClient, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -274,6 +279,11 @@ func NewClientFromConfig(config *vaultapi.Config, opts ...ClientOption) (*Client
 
 // NewClientFromRawClient creates a new Vault client from custom raw client.
 func NewClientFromRawClient(rawClient *vaultapi.Client, opts ...ClientOption) (*Client, error) {
+	return NewClientFromRawClientWithContext(context.Background(), rawClient, opts...)
+}
+
+// NewClientFromRawClientWithContext creates a new Vault client from custom raw client.
+func NewClientFromRawClientWithContext(ctx context.Context, rawClient *vaultapi.Client, opts ...ClientOption) (*Client, error) {
 	logical := rawClient.Logical()
 	transit := &Transit{
 		client: rawClient,
@@ -375,7 +385,7 @@ func NewClientFromRawClient(rawClient *vaultapi.Client, opts ...ClientOption) (*
 					}
 					client.mu.Unlock()
 
-					secret, err := client.getVaultAPISecret(jwtFile, o)
+					secret, err := client.getVaultAPISecret(ctx, jwtFile, o)
 					if err != nil {
 						client.logger.Error("failed to request new Vault token", map[string]interface{}{"err": err})
 						time.Sleep(1 * time.Second)
@@ -435,7 +445,7 @@ func NewClientFromRawClient(rawClient *vaultapi.Client, opts ...ClientOption) (*
 	return client, nil
 }
 
-func (client *Client) getVaultAPISecret(jwtFile string, o *clientOptions) (*vaultapi.Secret, error) {
+func (client *Client) getVaultAPISecret(ctx context.Context, jwtFile string, o *clientOptions) (*vaultapi.Secret, error) {
 	switch o.authMethod { //nolint:exhaustive
 	case AWSEC2AuthMethod:
 		jwt, err := os.ReadFile(jwtFile)
@@ -449,7 +459,7 @@ func (client *Client) getVaultAPISecret(jwtFile string, o *clientOptions) (*vaul
 			return nil, err
 		}
 
-		return awsAuth.Login(context.Background(), client.RawClient())
+		return awsAuth.Login(ctx, client.RawClient())
 
 	case AWSIAMAuthMethod:
 		awsAuth, err := aws.NewAWSAuth(aws.WithRole(o.role), aws.WithMountPath(o.authPath), aws.WithIAMAuth())
@@ -457,17 +467,17 @@ func (client *Client) getVaultAPISecret(jwtFile string, o *clientOptions) (*vaul
 			return nil, err
 		}
 
-		return awsAuth.Login(context.Background(), client.RawClient())
+		return awsAuth.Login(ctx, client.RawClient())
 
 	case GCPGCEAuthMethod:
 		gcpAuth, err := gcp.NewGCPAuth(o.role, gcp.WithGCEAuth(), gcp.WithMountPath(o.authPath))
 		if err != nil {
 			return nil, err
 		}
-		return gcpAuth.Login(context.Background(), client.RawClient())
+		return gcpAuth.Login(ctx, client.RawClient())
 
 	case GCPIAMAuthMethod:
-		serviceAccountEmail, err := metadata.EmailWithContext(context.Background(), "default")
+		serviceAccountEmail, err := metadata.EmailWithContext(ctx, "default")
 		if err != nil {
 			return nil, err
 		}
@@ -476,14 +486,14 @@ func (client *Client) getVaultAPISecret(jwtFile string, o *clientOptions) (*vaul
 		if err != nil {
 			return nil, err
 		}
-		return gcpAuth.Login(context.Background(), client.RawClient())
+		return gcpAuth.Login(ctx, client.RawClient())
 
 	case AzureMSIAuthMethod:
 		azureAuth, err := azure.NewAzureAuth(o.role, azure.WithMountPath(o.authPath))
 		if err != nil {
 			return nil, err
 		}
-		return azureAuth.Login(context.Background(), client.RawClient())
+		return azureAuth.Login(ctx, client.RawClient())
 
 	case NamespacedSecretAuthMethod:
 		if len(o.existingSecret) > 0 {
@@ -491,7 +501,7 @@ func (client *Client) getVaultAPISecret(jwtFile string, o *clientOptions) (*vaul
 			if err != nil {
 				return nil, err
 			}
-			return kubernetesAuth.Login(context.Background(), client.RawClient())
+			return kubernetesAuth.Login(ctx, client.RawClient())
 		}
 		fallthrough
 
@@ -506,7 +516,7 @@ func (client *Client) getVaultAPISecret(jwtFile string, o *clientOptions) (*vaul
 		if err != nil {
 			return nil, err
 		}
-		return kubernetesAuth.Login(context.Background(), client.RawClient())
+		return kubernetesAuth.Login(ctx, client.RawClient())
 	}
 }
 
