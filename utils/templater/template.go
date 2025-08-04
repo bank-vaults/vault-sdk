@@ -28,8 +28,8 @@ import (
 	"cloud.google.com/go/kms/apiv1/kmspb"
 	"emperror.dev/errors"
 	"github.com/Masterminds/sprig/v3"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/kms"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/kms"
 	"gocloud.dev/blob"
 	_ "gocloud.dev/blob/azureblob" // Azure blob driver
 	_ "gocloud.dev/blob/fileblob"  // File blob driver
@@ -151,16 +151,19 @@ func blobRead(urlstr string) (string, error) {
 }
 
 func awsKmsDecrypt(encodedString string, encryptionContext ...string) (string, error) {
-	awsSession, err := session.NewSession()
+	ctx := context.Background()
+
+	config, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to create AWS session")
+		return "", errors.Wrap(err, "failed to load AWS config")
 	}
-	svc := kms.New(awsSession)
+	kmsClient := kms.NewFromConfig(config)
+
 	decoded, err := base64.StdEncoding.DecodeString(encodedString)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to decode base64 string")
 	}
-	result, err := svc.Decrypt(&kms.DecryptInput{CiphertextBlob: decoded, EncryptionContext: convertContextMap(encryptionContext)})
+	result, err := kmsClient.Decrypt(ctx, &kms.DecryptInput{CiphertextBlob: decoded, EncryptionContext: convertContextMap(encryptionContext)})
 	if err != nil {
 		return "", errors.Wrap(err, "failed to decrypt ciphertext")
 	}
@@ -199,11 +202,11 @@ func fileContent(path string) (string, error) {
 	return strings.ReplaceAll(string(r), "\n", "\\n"), nil
 }
 
-func convertContextMap(encryptionContext []string) map[string]*string {
-	m := make(map[string]*string)
+func convertContextMap(encryptionContext []string) map[string]string {
+	m := make(map[string]string)
 	for _, p := range encryptionContext {
 		v := strings.Split(p, "=")
-		m[v[0]] = &v[1]
+		m[v[0]] = v[1]
 	}
 
 	return m
