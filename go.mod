@@ -8,7 +8,7 @@ require (
 	emperror.dev/errors v0.8.1
 	github.com/Masterminds/sprig/v3 v3.3.0
 	github.com/aws/aws-sdk-go-v2/config v1.31.8
-	github.com/aws/aws-sdk-go-v2/service/kms v1.45.1
+	github.com/aws/aws-sdk-go-v2/service/kms v1.45.3
 	github.com/fsnotify/fsnotify v1.9.0
 	github.com/hashicorp/vault/api v1.21.0
 	github.com/hashicorp/vault/api/auth/aws v0.10.0
