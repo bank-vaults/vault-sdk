@@ -25,9 +25,7 @@ Check out the library documentation on the [Bank-Vaults website](https://bank-va
 
 ## Development
 
-**For an optimal developer experience, it is recommended to install [Nix](https://nixos.org/download.html) and [direnv](https://direnv.net/docs/installation.html).**
-
-_Alternatively, install [Go](https://go.dev/dl/) on your computer then run `make deps` to install the rest of the dependencies._
+Install [Go](https://go.dev/dl/) on your computer then run `make deps` to install the rest of the dependencies._
 
 Fetch required tools:
 
