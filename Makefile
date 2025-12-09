@@ -72,7 +72,7 @@ license-check: ## Run license check
 ##@ Dependencies
 
 # Dependency versions
-GOLANGCI_LINT_VERSION = 2.0.2
+GOLANGCI_LINT_VERSION = 2.7.2
 LICENSEI_VERSION = 0.9.0
 
 # Dependency binaries
