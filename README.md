@@ -11,7 +11,7 @@
 
 ## Compatibility
 
-This SDK is compatible with Go version **1.24** and above.
+This SDK is compatible with Go version **1.25** and above.
 
 ## Install
 

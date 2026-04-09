@@ -21,7 +21,7 @@ jobs:
       # that should be able to fail independently.
       fail-fast: false
       matrix:
-        go: ['1.24', '1.25']
+        go: ['1.25']
 
     steps:
       - name: Checkout repository
@@ -48,7 +48,7 @@ jobs:
       # that should be able to fail independently.
       fail-fast: false
       matrix:
-        go: ['1.24', '1.25']
+        go: ['1.25']
 
     steps:
       - name: Checkout repository
@@ -71,7 +71,7 @@ jobs:
       # that should be able to fail independently.
       fail-fast: false
       matrix:
-        go: ['1.24', '1.25']
+        go: ['1.25']
 
     steps:
       - name: Checkout repository
