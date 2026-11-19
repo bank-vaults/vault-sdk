@@ -31,6 +31,8 @@ import (
 	"github.com/bank-vaults/vault-sdk/vault"
 )
 
+const latestVersion = "-1"
+
 type SecretInjectorFunc func(key, value string)
 
 type SecretRenewer interface {
@@ -280,7 +282,7 @@ func (i *SecretInjector) InjectSecretsFromVaultWithContext(ctx context.Context, 
 
 		key := split[1]
 
-		versionOrData := "-1"
+		versionOrData := latestVersion
 		if update {
 			versionOrData = "{}"
 		}
@@ -350,7 +352,7 @@ func (i *SecretInjector) InjectSecretsFromVaultPathWithContext(ctx context.Conte
 		split := strings.SplitN(path, "#", 2)
 		valuePath := split[0]
 
-		version := "-1"
+		version := latestVersion
 
 		if len(split) == 2 {
 			version = split[1]
@@ -400,7 +402,12 @@ func (i *SecretInjector) readVaultPath(ctx context.Context, path, versionOrData 
 			return nil, errors.Wrapf(err, "failed to write secret to path: %s", path)
 		}
 	} else {
-		secret, err = i.client.RawClient().Logical().ReadWithDataWithContext(ctx, path, map[string][]string{"version": {versionOrData}})
+		var params map[string][]string
+		if versionOrData != latestVersion {
+			params = map[string][]string{"version": {versionOrData}}
+		}
+
+		secret, err = i.client.RawClient().Logical().ReadWithDataWithContext(ctx, path, params)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to read secret from path: %s", path)
 		}

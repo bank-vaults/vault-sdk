@@ -18,9 +18,12 @@ import (
 	"encoding/base64"
 	"io"
 	"log/slog"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"reflect"
 	"strings"
+	"sync"
 	"testing"
 
 	vaultapi "github.com/hashicorp/vault/api"
@@ -353,4 +356,61 @@ func TestPaginate(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestReadVersionParameter(t *testing.T) {
+	var (
+		mu       sync.Mutex
+		requests = map[string][]string{}
+	)
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		mu.Lock()
+		requests[r.URL.Path] = r.URL.Query()["version"]
+		mu.Unlock()
+
+		w.Header().Set("Content-Type", "application/json")
+
+		if strings.HasPrefix(r.URL.Path, "/v1/secret/data/") {
+			_, _ = w.Write([]byte(`{"data":{"data":{"password":"secret"},"metadata":{"destroyed":false}}}`))
+
+			return
+		}
+
+		_, _ = w.Write([]byte(`{"data":{"username":"user","password":"secret"}}`))
+	}))
+	t.Cleanup(server.Close)
+
+	config := vaultapi.DefaultConfig()
+	config.Address = server.URL
+
+	rawClient, err := vaultapi.NewClient(config)
+	require.NoError(t, err)
+	rawClient.SetToken("test")
+
+	client, err := vault.NewClientFromRawClient(rawClient)
+	require.NoError(t, err)
+
+	injector := NewSecretInjector(Config{}, client, nil, slog.New(slog.NewTextHandler(io.Discard, nil)))
+
+	err = injector.InjectSecretsFromVault(map[string]string{
+		"DB_USERNAME":    "vault:database/creds/role#username",
+		"KV_PASSWORD":    "vault:secret/data/latest#password",
+		"KV_PASSWORD_V2": "vault:secret/data/pinned#password#2",
+	}, func(string, string) {})
+	require.NoError(t, err)
+
+	err = injector.InjectSecretsFromVaultPath("database/creds/path-role,secret/data/path-pinned#3", func(string, string) {})
+	require.NoError(t, err)
+
+	mu.Lock()
+	defer mu.Unlock()
+
+	assert.Equal(t, map[string][]string{
+		"/v1/database/creds/role":      nil,
+		"/v1/secret/data/latest":       nil,
+		"/v1/secret/data/pinned":       {"2"},
+		"/v1/database/creds/path-role": nil,
+		"/v1/secret/data/path-pinned":  {"3"},
+	}, requests)
 }
